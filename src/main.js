@@ -75,3 +75,40 @@ app.on('window-all-closed', () => {
 
 // In this file you can include the rest of your app's specific main process
 // code. You can also put them in separate files and import them here.
+
+console.log('Banner number:', getBannerNumber(), 'Search:', window.location.search);
+
+function getBannerNumber() {
+  const params = new URLSearchParams(window.location.search);
+  return parseInt(params.get('banner') || '1', 10);
+}
+
+const Banner = () => {
+  const [displayName, setDisplayName] = useState(null);
+  const bannerNumber = getBannerNumber();
+
+  useEffect(() => {
+    window.electronAPI.on('display-name', (nameData) => {
+      setDisplayName(nameData);
+    });
+    window.electronAPI.on('clear-name', () => {
+      setDisplayName(null);
+    });
+  }, []);
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100vh', fontFamily: 'sans-serif', background: '#222', color: '#fff' }}>
+      <h1 style={{ fontSize: 64 }}>Banner {bannerNumber}</h1>
+      {displayName ? (
+        <>
+          <div style={{ fontSize: 72, fontWeight: 'bold' }}>{displayName.firstLine}</div>
+          <div style={{ fontSize: 48 }}>{displayName.secondLine}</div>
+        </>
+      ) : (
+        <p style={{ fontSize: 24 }}>Waiting for name display...</p>
+      )}
+    </div>
+  );
+};
+
+export default Banner;
