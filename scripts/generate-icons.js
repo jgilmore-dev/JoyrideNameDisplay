@@ -97,11 +97,8 @@ async function main() {
   
   setup();
 
-  const tempFaviconPng = path.join(TMP_DIR, 'favicon-192.png');
-  await sharp(SRC_FAVICON).resize(192, 192).png().toFile(tempFaviconPng);
-
   const appPngs = await generatePngVariants(SRC_APP_ICON, APP_ICON_SIZES, 'app');
-  const faviconPngs = await generatePngVariants(tempFaviconPng, FAVICON_SIZES, 'favicon');
+  const faviconPngs = await generatePngVariants(SRC_FAVICON, FAVICON_SIZES, 'favicon');
 
   await generateIco(appPngs, path.join(ICONS_DIR, 'app-icon.ico'));
   await generateIco(faviconPngs, path.join(ICONS_DIR, 'favicon.ico'));
@@ -109,8 +106,9 @@ async function main() {
   await generateIcns(appPngs, path.join(ICONS_DIR, 'app-icon.icns'));
 
   // Copy largest PNGs for Linux/general use
+  const largestFavicon = faviconPngs[faviconPngs.length - 1];
   fs.copyFileSync(SRC_APP_ICON, path.join(ICONS_DIR, 'app-icon.png'));
-  fs.copyFileSync(tempFaviconPng, path.join(ICONS_DIR, 'favicon.png'));
+  fs.copyFileSync(largestFavicon, path.join(ICONS_DIR, 'favicon.png'));
   console.log('✅ Copied PNGs for Linux/general use');
   
   // No need to clean TMP_DIR, it's removed at the start of the script.
