@@ -5,23 +5,21 @@ const pngToIco = require('png-to-ico');
 const fs = require('fs');
 const path = require('path');
 const os = require('os');
+const { execSync } = require('child_process');
 
 const ICONS_DIR = path.join(__dirname, '../src/assets/icons');
 const TMP_DIR = path.join(ICONS_DIR, 'tmp');
+const SRC_APP_ICON = path.join(ICONS_DIR, 'app-icon-512.png');
+const SRC_FAVICON = path.join(ICONS_DIR, 'joyride-favicon-192.webp');
 
-// Ensure directories exist
-if (!fs.existsSync(ICONS_DIR)) fs.mkdirSync(ICONS_DIR, { recursive: true });
-if (!fs.existsSync(TMP_DIR)) fs.mkdirSync(TMP_DIR, { recursive: true });
+const APP_ICON_SIZES = [16, 32, 48, 64, 128, 256, 512];
+const FAVICON_SIZES = [16, 32, 48, 64, 128, 192];
 
-const appPng = path.join(ICONS_DIR, 'app-icon-512.png');
-const faviconWebp = path.join(ICONS_DIR, 'joyride-favicon-192.webp');
-
-const appPngSizes = [16, 32, 48, 64, 128, 256, 512];
-const faviconSizes = [16, 32, 48, 64, 128, 192];
-
-async function convertWebpToPng(webpPath, outPath, size) {
-  await sharp(webpPath).resize(size, size).png().toFile(outPath);
-  console.log(`✅ Converted ${webpPath} to ${outPath}`);
+function setup() {
+  if (fs.existsSync(TMP_DIR)) {
+    fs.rmSync(TMP_DIR, { recursive: true, force: true });
+  }
+  fs.mkdirSync(TMP_DIR, { recursive: true });
 }
 
 async function generatePngVariants(src, sizes, prefix) {
@@ -36,132 +34,92 @@ async function generatePngVariants(src, sizes, prefix) {
 }
 
 async function generateIco(pngs, outPath) {
-  const buf = await pngToIco(pngs);
-  fs.writeFileSync(outPath, buf);
-  console.log(`✅ Created ICO: ${outPath}`);
+  try {
+    const buf = await pngToIco(pngs);
+    fs.writeFileSync(outPath, buf);
+    console.log(`✅ Created ICO: ${outPath}`);
+  } catch (error) {
+    console.error(`❌ Failed to create ICO: ${outPath}`, error);
+    throw error;
+  }
 }
 
 async function generateIcns(pngs, outPath) {
-  const platform = os.platform();
-  
-  if (platform === 'darwin') {
-    // On Mac, try to use png2icns if available
-    try {
-      const png2icns = require('png2icns');
-      const largestPng = pngs[pngs.length - 1]; // Use the largest PNG (512x512)
-      
-      await new Promise((resolve, reject) => {
-        png2icns({
-          in: largestPng,
-          out: outPath,
-          sizes: [16, 32, 64, 128, 256, 512]
-        }, (err) => {
-          if (err) {
-            reject(err);
-          } else {
-            resolve();
-          }
-        });
-      });
-      
-      console.log(`✅ Created ICNS: ${outPath}`);
-    } catch (error) {
-      console.warn(`⚠️  ICNS generation failed: ${error.message}`);
-      console.log('   Creating ICNS manually...');
-      await createIcnsManually(pngs, outPath);
-    }
-  } else {
-    console.log('📋 ICNS generation skipped (Mac-only format)');
-    console.log('   To create ICNS on Mac:');
-    console.log('   1. Copy the generated PNG files to a Mac');
-    console.log('   2. Use iconutil or a tool like Icon Composer');
-    console.log('   3. Or run this script on a Mac system');
+  if (os.platform() !== 'darwin') {
+    console.log('📋 Skipping ICNS generation on non-Mac platform.');
+    return;
   }
-}
 
-async function createIcnsManually(pngs, outPath) {
-  // Create a temporary iconset directory
+  console.log('🍎 Generating ICNS for macOS...');
   const iconsetDir = path.join(TMP_DIR, 'app.iconset');
-  if (!fs.existsSync(iconsetDir)) fs.mkdirSync(iconsetDir, { recursive: true });
-  
-  // Copy PNG files with proper naming for iconutil
+  if (fs.existsSync(iconsetDir)) {
+    fs.rmSync(iconsetDir, { recursive: true, force: true });
+  }
+  fs.mkdirSync(iconsetDir, { recursive: true });
+
   const sizeMap = {
-    16: 'icon_16x16.png',
-    32: 'icon_16x16@2x.png',
-    32: 'icon_32x32.png',
-    64: 'icon_32x32@2x.png',
-    128: 'icon_128x128.png',
-    256: 'icon_128x128@2x.png',
-    256: 'icon_256x256.png',
-    512: 'icon_256x256@2x.png',
-    512: 'icon_512x512.png'
+    16: ['icon_16x16.png'],
+    32: ['icon_16x16@2x.png', 'icon_32x32.png'],
+    64: ['icon_32x32@2x.png'],
+    128: ['icon_128x128.png'],
+    256: ['icon_128x128@2x.png', 'icon_256x256.png'],
+    512: ['icon_256x256@2x.png', 'icon_512x512.png'],
   };
-  
+
   for (const png of pngs) {
-    const size = parseInt(path.basename(png).split('-')[1]);
-    const targetName = sizeMap[size];
-    if (targetName) {
-      fs.copyFileSync(png, path.join(iconsetDir, targetName));
+    const sizeMatch = path.basename(png).match(/-(\d+)\.png$/);
+    if (!sizeMatch) continue;
+    const size = parseInt(sizeMatch[1], 10);
+    if (sizeMap[size]) {
+      for (const targetName of sizeMap[size]) {
+        fs.copyFileSync(png, path.join(iconsetDir, targetName));
+      }
     }
   }
-  
+
   console.log(`📁 Created iconset at: ${iconsetDir}`);
-  console.log(`   Run on Mac: iconutil --convert icns --output "${outPath}" "${iconsetDir}"`);
+
+  try {
+    execSync(`iconutil --convert icns --output "${outPath}" "${iconsetDir}"`);
+    console.log(`✅ Created ICNS: ${outPath}`);
+  } catch (error) {
+    console.error('❌ Error using iconutil:', error.message);
+    console.error('   Stderr:', error.stderr ? error.stderr.toString() : 'N/A');
+    console.error('   Stdout:', error.stdout ? error.stdout.toString() : 'N/A');
+    console.log('   Please ensure Xcode Command Line Tools are installed on your Mac.');
+    throw error;
+  }
 }
 
 async function main() {
   console.log('🎨 Generating cross-platform icons...');
   console.log(`🖥️  Platform: ${os.platform()}`);
+  
+  setup();
 
-  // 1. Convert favicon WebP to PNG (always to a unique temp file)
-  const faviconPngTemp = path.join(TMP_DIR, `favicon-192-${Date.now()}.png`);
-  await convertWebpToPng(faviconWebp, faviconPngTemp, 192);
+  const tempFaviconPng = path.join(TMP_DIR, 'favicon-192.png');
+  await sharp(SRC_FAVICON).resize(192, 192).png().toFile(tempFaviconPng);
 
-  // 2. Generate PNG variants for app icon and favicon
-  const appPngs = await generatePngVariants(appPng, appPngSizes, 'app');
-  const faviconPngs = await generatePngVariants(faviconPngTemp, faviconSizes, 'favicon');
+  const appPngs = await generatePngVariants(SRC_APP_ICON, APP_ICON_SIZES, 'app');
+  const faviconPngs = await generatePngVariants(tempFaviconPng, FAVICON_SIZES, 'favicon');
 
-  // 3. Generate ICO (Windows)
   await generateIco(appPngs, path.join(ICONS_DIR, 'app-icon.ico'));
   await generateIco(faviconPngs, path.join(ICONS_DIR, 'favicon.ico'));
 
-  // 4. Generate ICNS (Mac) - platform dependent
   await generateIcns(appPngs, path.join(ICONS_DIR, 'app-icon.icns'));
 
-  // 5. Copy PNGs for Linux (largest size)
-  fs.copyFileSync(appPng, path.join(ICONS_DIR, 'app-icon.png'));
-  fs.copyFileSync(faviconPngTemp, path.join(ICONS_DIR, 'favicon.png'));
-  console.log('✅ Copied PNGs for Linux');
-
-  // 6. Clean up temp files (but keep iconset if created)
-  const iconsetDir = path.join(TMP_DIR, 'app.iconset');
-  if (fs.existsSync(iconsetDir)) {
-    console.log(`📁 Iconset preserved at: ${iconsetDir}`);
-    console.log('   Use this for manual ICNS creation on Mac');
-  }
+  // Copy largest PNGs for Linux/general use
+  fs.copyFileSync(SRC_APP_ICON, path.join(ICONS_DIR, 'app-icon.png'));
+  fs.copyFileSync(tempFaviconPng, path.join(ICONS_DIR, 'favicon.png'));
+  console.log('✅ Copied PNGs for Linux/general use');
   
-  // Remove other temp files
-  const tempFiles = fs.readdirSync(TMP_DIR).filter(f => !f.includes('app.iconset'));
-  for (const file of tempFiles) {
-    fs.unlinkSync(path.join(TMP_DIR, file));
-  }
-  console.log('🧹 Cleaned up temp files');
+  // No need to clean TMP_DIR, it's removed at the start of the script.
 
   console.log('\n🎉 Icon generation complete!');
-  console.log('📁 Generated files:');
-  console.log('  - app-icon.ico (Windows)');
-  console.log('  - app-icon.png (Linux)');
-  console.log('  - favicon.ico (browser)');
-  console.log('  - favicon.png (browser/Linux)');
-  
-  if (os.platform() !== 'darwin') {
-    console.log('\n🍎 For Mac builds:');
-    console.log('   - ICNS files need to be created on a Mac system');
-    console.log('   - Use the iconset directory or run this script on Mac');
-  }
 }
 
 main().catch(err => {
-  console.error('❌ Error generating icons:', err);
+  console.error('\n❌ An error occurred during icon generation:');
+  console.error(err);
   process.exit(1);
 }); 
