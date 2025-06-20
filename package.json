@@ -1,8 +1,8 @@
 {
   "name": "joyridenamedisplay",
-  "productName": "joyridenamedisplay",
-  "version": "1.0.0",
-  "description": "My Electron application description",
+  "productName": "JoyRide Cars Name Display",
+  "version": "1.1.0",
+  "description": "JoyRide Cars Name Display - A car club application for kids with special needs",
   "main": ".webpack/main",
   "scripts": {
     "start": "electron-forge start",

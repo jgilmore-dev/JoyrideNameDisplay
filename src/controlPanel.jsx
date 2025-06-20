@@ -13,12 +13,20 @@ const ControlPanel = () => {
   const [editingMember, setEditingMember] = useState(null);
   const [showBannerNumbers, setShowBannerNumbers] = useState(true);
   const [settings, setSettings] = useState({
+    banner1Enabled: false,
     banner2Enabled: false,
     banner1Display: 0,
-    banner2Display: 1
+    banner2Display: 1,
+    fontColor: '#8B9091' // Always use this as the default
   });
   const [showSettings, setShowSettings] = useState(false);
   const [availableDisplays, setAvailableDisplays] = useState([]);
+  const [colorInputValue, setColorInputValue] = useState('#8B9091'); // Always use this as the default
+  const [settingsCollapsed, setSettingsCollapsed] = useState(false);
+  const [dataCollapsed, setDataCollapsed] = useState(false);
+  const [mediaCollapsed, setMediaCollapsed] = useState(false);
+  const [displayCollapsed, setDisplayCollapsed] = useState(false);
+  const [memberCollapsed, setMemberCollapsed] = useState(false);
 
   const fetchMembers = async () => {
     const memberList = await window.electronAPI.invoke('get-members');
@@ -28,9 +36,12 @@ const ControlPanel = () => {
   const fetchSettings = async () => {
     try {
       const savedSettings = await window.electronAPI.invoke('get-settings');
-      if (savedSettings) {
-        setSettings(savedSettings);
-      }
+      setSettings(prev => ({
+        ...prev,
+        ...(savedSettings || {}),
+        fontColor: (savedSettings && savedSettings.fontColor) ? savedSettings.fontColor : '#8B9091'
+      }));
+      setColorInputValue((savedSettings && savedSettings.fontColor) ? savedSettings.fontColor : '#8B9091');
     } catch (error) {
       console.error('Error fetching settings:', error);
     }
@@ -128,6 +139,11 @@ const ControlPanel = () => {
       setSettings(newSettings);
       await window.electronAPI.invoke('save-settings', newSettings);
       await window.electronAPI.invoke('apply-display-settings', newSettings);
+      
+      // Send font color update to banner windows if it changed
+      if (newSettings.fontColor !== settings.fontColor) {
+        window.electronAPI.send('update-font-color', newSettings.fontColor);
+      }
     } catch (error) {
       console.error('Error applying settings:', error);
       // Revert to previous settings on error
@@ -150,7 +166,7 @@ const ControlPanel = () => {
   return (
     <div className="container">
       <div className="header-section">
-        <h1>Joyride Control Panel</h1>
+        <h1>JoyRide Control Panel</h1>
         <button 
           className="settings-button" 
           onClick={() => setShowSettings(!showSettings)}
@@ -161,46 +177,30 @@ const ControlPanel = () => {
 
       {showSettings && (
         <div className="settings-section">
-          <h3>Display Settings</h3>
-          <div className="settings-grid">
-            <div className="setting-item">
-              <label>
-                <input 
-                  type="checkbox" 
-                  checked={settings.banner2Enabled} 
-                  onChange={(e) => handleSettingsChange({
-                    ...settings, 
-                    banner2Enabled: e.target.checked
+          <div className="section-header" onClick={() => setSettingsCollapsed(!settingsCollapsed)}>
+            <span>{settingsCollapsed ? '►' : '▼'}</span> <h3>Display Settings</h3>
+          </div>
+          {!settingsCollapsed && (
+            <div className="settings-grid">
+              <div className="setting-item banner-setting-row">
+                <label>
+                  <input
+                    type="checkbox"
+                    checked={settings.banner1Enabled}
+                    onChange={e => handleSettingsChange({
+                      ...settings,
+                      banner1Enabled: e.target.checked
+                    })}
+                  />
+                  Enable Banner 1
+                </label>
+                <select
+                  value={settings.banner1Display}
+                  onChange={e => handleSettingsChange({
+                    ...settings,
+                    banner1Display: parseInt(e.target.value)
                   })}
-                />
-                Enable Banner 2
-              </label>
-            </div>
-            <div className="setting-item">
-              <label>Banner 1 Display:</label>
-              <select 
-                value={settings.banner1Display} 
-                onChange={(e) => handleSettingsChange({
-                  ...settings, 
-                  banner1Display: parseInt(e.target.value)
-                })}
-              >
-                {availableDisplays.map(display => (
-                  <option key={display.index} value={display.index}>
-                    {display.name} ({display.bounds.width}x{display.bounds.height})
-                  </option>
-                ))}
-              </select>
-            </div>
-            {settings.banner2Enabled && (
-              <div className="setting-item">
-                <label>Banner 2 Display:</label>
-                <select 
-                  value={settings.banner2Display} 
-                  onChange={(e) => handleSettingsChange({
-                    ...settings, 
-                    banner2Display: parseInt(e.target.value)
-                  })}
+                  disabled={!settings.banner1Enabled}
                 >
                   {availableDisplays.map(display => (
                     <option key={display.index} value={display.index}>
@@ -209,84 +209,182 @@ const ControlPanel = () => {
                   ))}
                 </select>
               </div>
-            )}
-          </div>
+              <div className="setting-item banner-setting-row">
+                <label>
+                  <input
+                    type="checkbox"
+                    checked={settings.banner2Enabled}
+                    onChange={e => handleSettingsChange({
+                      ...settings,
+                      banner2Enabled: e.target.checked
+                    })}
+                  />
+                  Enable Banner 2
+                </label>
+                <select
+                  value={settings.banner2Display}
+                  onChange={e => handleSettingsChange({
+                    ...settings,
+                    banner2Display: parseInt(e.target.value)
+                  })}
+                  disabled={!settings.banner2Enabled}
+                >
+                  {availableDisplays.map(display => (
+                    <option key={display.index} value={display.index}>
+                      {display.name} ({display.bounds.width}x{display.bounds.height})
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div className="setting-item">
+                <label>Font Color:</label>
+                <div className="color-picker-container">
+                  <input 
+                    type="color" 
+                    value={settings.fontColor}
+                    onChange={(e) => {
+                      const newColor = e.target.value;
+                      setColorInputValue(newColor);
+                      handleSettingsChange({
+                        ...settings, 
+                        fontColor: newColor
+                      });
+                    }}
+                    className="color-picker"
+                  />
+                  <input
+                    type="text"
+                    value={colorInputValue}
+                    onChange={(e) => {
+                      const hexValue = e.target.value.toUpperCase();
+                      // Allow partial input but only update settings when valid
+                      if (hexValue === '' || /^#[0-9A-Fa-f]{0,6}$/.test(hexValue)) {
+                        // Update the input value immediately for responsive typing
+                        setColorInputValue(hexValue);
+                        
+                        // Only apply the change if it's a complete valid hex color
+                        if (/^#[0-9A-Fa-f]{6}$/.test(hexValue)) {
+                          handleSettingsChange({
+                            ...settings,
+                            fontColor: hexValue
+                          });
+                        }
+                      }
+                    }}
+                    onBlur={(e) => {
+                      // On blur, if the input is incomplete, revert to the last valid color
+                      const hexValue = e.target.value;
+                      if (!/^#[0-9A-Fa-f]{6}$/.test(hexValue)) {
+                        setColorInputValue(settings.fontColor);
+                      }
+                    }}
+                    placeholder="#8B9091"
+                    className="color-input"
+                  />
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       )}
 
       <div className="data-section">
-        <h3>Data Management</h3>
-        <div className="button-group">
-          <button onClick={handleLoadCsv} className="primary-button">
-            📁 Load Member CSV
-          </button>
-          <button onClick={() => setShowAddForm(!showAddForm)} className="primary-button">
-            {showAddForm ? '❌ Cancel Adding' : '➕ Add New Member'}
-          </button>
+        <div className="section-header" onClick={() => setDataCollapsed(!dataCollapsed)}>
+          <span>{dataCollapsed ? '►' : '▼'}</span> <h3>Data Management</h3>
         </div>
-        {showAddForm && <AddMemberForm onAddMember={handleAddMember} onCancel={() => setShowAddForm(false)} />}
+        {!dataCollapsed && (
+          <div>
+            <div className="button-group">
+              <button onClick={handleLoadCsv} className="primary-button">
+                📁 Load Member CSV
+              </button>
+              <button onClick={() => setShowAddForm(!showAddForm)} className="primary-button">
+                {showAddForm ? '❌ Cancel Adding' : '➕ Add New Member'}
+              </button>
+            </div>
+            {showAddForm && <AddMemberForm onAddMember={handleAddMember} onCancel={() => setShowAddForm(false)} />}
+          </div>
+        )}
       </div>
 
       <div className="media-section">
-        <h3>Slideshow Management</h3>
-        <div className="button-group">
-          <button onClick={handleImportImages} className="secondary-button">
-            🖼️ Import Slideshow Images
-          </button>
-          <button onClick={handleClearCache} className="danger-button">
-            🗑️ Clear Slideshow Images
-          </button>
+        <div className="section-header" onClick={() => setMediaCollapsed(!mediaCollapsed)}>
+          <span>{mediaCollapsed ? '►' : '▼'}</span> <h3>Slideshow Management</h3>
         </div>
+        {!mediaCollapsed && (
+          <div>
+            <div className="button-group">
+              <button onClick={handleImportImages} className="secondary-button">
+                🖼️ Import Slideshow Images
+              </button>
+              <button onClick={handleClearCache} className="danger-button">
+                🗑️ Clear Slideshow Images
+              </button>
+            </div>
+          </div>
+        )}
       </div>
 
       <div className="display-section">
-        <h3>Display Controls</h3>
-        <div className="button-group">
-          <button onClick={() => handleClearBanner(1)} className="display-button">
-            🖥️ Clear Banner 1
-          </button>
-          {settings.banner2Enabled && (
-            <button onClick={() => handleClearBanner(2)} className="display-button">
-              🖥️ Clear Banner 2
-            </button>
-          )}
+        <div className="section-header" onClick={() => setDisplayCollapsed(!displayCollapsed)}>
+          <span>{displayCollapsed ? '►' : '▼'}</span> <h3>Display Controls</h3>
         </div>
-        <div className="display-options">
-          <label>
-            <input type="checkbox" checked={showBannerNumbers} onChange={toggleBannerNumberVisibility} />
-            Show Banner Numbers
-          </label>
-        </div>
+        {!displayCollapsed && (
+          <div>
+            <div className="button-group">
+              <button onClick={() => handleClearBanner(1)} className="display-button">
+                🖥️ Clear Banner 1
+              </button>
+              {settings.banner2Enabled && (
+                <button onClick={() => handleClearBanner(2)} className="display-button">
+                  🖥️ Clear Banner 2
+                </button>
+              )}
+            </div>
+            <div className="display-options">
+              <label>
+                <input type="checkbox" checked={showBannerNumbers} onChange={toggleBannerNumberVisibility} />
+                Show Banner Numbers
+              </label>
+            </div>
+          </div>
+        )}
       </div>
 
       {error && <p className="error-text">{error}</p>}
 
       {members.length > 0 ? (
         <div className="member-section">
-          <h3>Member Management</h3>
-          <div className="search-container">
-            <input 
-              type="text" 
-              placeholder="Search names..." 
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)} 
-            />
-            <label>
-              <input 
-                type="checkbox" 
-                checked={showDisplayed} 
-                onChange={(e) => setShowDisplayed(e.target.checked)} 
-              />
-              Show Recently Displayed
-            </label>
+          <div className="section-header" onClick={() => setMemberCollapsed(!memberCollapsed)}>
+            <span>{memberCollapsed ? '►' : '▼'}</span> <h3>Member Management</h3>
           </div>
-          <MemberList 
-            members={showDisplayed ? recentlyDisplayedMembers : membersToDisplay} 
-            onSelectMember={handleSelectMember} 
-            onEditMember={handleEditMember}
-            banner2Enabled={settings.banner2Enabled}
-          />
-          {editingMember && <EditMemberForm member={editingMember} onUpdateMember={handleUpdateMember} onCancel={() => setEditingMember(null)} />}
+          {!memberCollapsed && (
+            <div>
+              <div className="search-container">
+                <input 
+                  type="text" 
+                  placeholder="Search names..." 
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)} 
+                />
+                <label>
+                  <input 
+                    type="checkbox" 
+                    checked={showDisplayed} 
+                    onChange={(e) => setShowDisplayed(e.target.checked)} 
+                  />
+                  Show Recently Displayed
+                </label>
+              </div>
+              <MemberList 
+                members={showDisplayed ? recentlyDisplayedMembers : membersToDisplay} 
+                onSelectMember={handleSelectMember} 
+                onEditMember={handleEditMember}
+                banner2Enabled={settings.banner2Enabled}
+              />
+              {editingMember && <EditMemberForm member={editingMember} onUpdateMember={handleUpdateMember} onCancel={() => setEditingMember(null)} />}
+            </div>
+          )}
         </div>
       ) : (
         <div className="info-section">

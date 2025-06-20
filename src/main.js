@@ -96,7 +96,7 @@ const createWindows = () => {
     webPreferences: {
       preload: CONTROL_PANEL_PRELOAD_WEBPACK_ENTRY,
     },
-    title: 'Joyride Control Panel',
+    title: 'JoyRide Control Panel',
   };
   
   // Only add icon if we have a valid path
@@ -108,39 +108,43 @@ const createWindows = () => {
   controlPanelWindow.loadURL(CONTROL_PANEL_WEBPACK_ENTRY);
   if (!app.isPackaged) controlPanelWindow.webContents.openDevTools({ mode: 'detach' });
 
-  // Banner 1 Window
-  const banner1Bounds = getDisplayBounds(currentSettings.banner1Display);
-  console.log('Creating Banner 1 with bounds:', banner1Bounds);
-  
-  const banner1Config = {
-    width: banner1Bounds.width,
-    height: banner1Bounds.height,
-    x: banner1Bounds.x,
-    y: banner1Bounds.y,
-    fullscreen: true,
-    frame: false,
-    webPreferences: {
-      preload: BANNER_PRELOAD_WEBPACK_ENTRY,
-    },
-    title: 'Joyride Banner 1',
-    show: true,
-  };
-  
-  // Only add icon if we have a valid path
-  if (iconPath && fs.existsSync(iconPath)) {
-    banner1Config.icon = iconPath;
+  // Banner 1 Window (only if enabled)
+  if (currentSettings.banner1Enabled) {
+    const banner1Bounds = getDisplayBounds(currentSettings.banner1Display);
+    console.log('Creating Banner 1 with bounds:', banner1Bounds);
+    const banner1Config = {
+      width: banner1Bounds.width,
+      height: banner1Bounds.height,
+      x: banner1Bounds.x,
+      y: banner1Bounds.y,
+      fullscreen: true,
+      frame: false,
+      webPreferences: {
+        preload: BANNER_PRELOAD_WEBPACK_ENTRY,
+      },
+      title: 'JoyRide Banner 1',
+      show: true,
+    };
+    if (iconPath && fs.existsSync(iconPath)) {
+      banner1Config.icon = iconPath;
+    }
+    bannerWindow1 = new BrowserWindow(banner1Config);
+    bannerWindow1.loadURL(BANNER_WEBPACK_ENTRY + '?banner=1');
+    bannerWindow1.setMenu(null);
+    if (!app.isPackaged) bannerWindow1.webContents.openDevTools({ mode: 'detach' });
+    setTimeout(() => {
+      if (bannerWindow1 && !bannerWindow1.isDestroyed()) {
+        bannerWindow1.webContents.send('set-font-color', currentSettings.fontColor);
+      }
+    }, 1000);
+  } else {
+    bannerWindow1 = null;
   }
-  
-  bannerWindow1 = new BrowserWindow(banner1Config);
-  bannerWindow1.loadURL(BANNER_WEBPACK_ENTRY + '?banner=1');
-  bannerWindow1.setMenu(null);
-  if (!app.isPackaged) bannerWindow1.webContents.openDevTools({ mode: 'detach' });
 
   // Banner 2 Window (only if enabled)
   if (currentSettings.banner2Enabled) {
     const banner2Bounds = getDisplayBounds(currentSettings.banner2Display);
     console.log('Creating Banner 2 with bounds:', banner2Bounds);
-    
     const banner2Config = {
       width: banner2Bounds.width,
       height: banner2Bounds.height,
@@ -151,21 +155,22 @@ const createWindows = () => {
       webPreferences: {
         preload: BANNER_PRELOAD_WEBPACK_ENTRY,
       },
-      title: 'Joyride Banner 2',
+      title: 'JoyRide Banner 2',
       show: true,
     };
-    
-    // Only add icon if we have a valid path
     if (iconPath && fs.existsSync(iconPath)) {
       banner2Config.icon = iconPath;
     }
-    
     bannerWindow2 = new BrowserWindow(banner2Config);
     bannerWindow2.loadURL(BANNER_WEBPACK_ENTRY + '?banner=2');
     bannerWindow2.setMenu(null);
     if (!app.isPackaged) bannerWindow2.webContents.openDevTools({ mode: 'detach' });
+    setTimeout(() => {
+      if (bannerWindow2 && !bannerWindow2.isDestroyed()) {
+        bannerWindow2.webContents.send('set-font-color', currentSettings.fontColor);
+      }
+    }, 1000);
   } else {
-    console.log('Banner 2 is disabled, not creating window');
     bannerWindow2 = null;
   }
 };
@@ -271,37 +276,43 @@ ipcMain.handle('apply-display-settings', async (event, settings) => {
   }
 
   // Create new banner windows with updated settings
-  const banner1Bounds = getDisplayBounds(settings.banner1Display);
-  console.log('Creating Banner 1 with bounds:', banner1Bounds);
-  
-  const banner1Config = {
-    width: banner1Bounds.width,
-    height: banner1Bounds.height,
-    x: banner1Bounds.x,
-    y: banner1Bounds.y,
-    fullscreen: true,
-    frame: false,
-    webPreferences: {
-      preload: BANNER_PRELOAD_WEBPACK_ENTRY,
-    },
-    title: 'Joyride Banner 1',
-    show: true,
-  };
-  
-  // Only add icon if we have a valid path
-  if (iconPath && fs.existsSync(iconPath)) {
-    banner1Config.icon = iconPath;
+  // Banner 1 Window (only if enabled)
+  if (settings.banner1Enabled) {
+    const banner1Bounds = getDisplayBounds(settings.banner1Display);
+    console.log('Creating Banner 1 with bounds:', banner1Bounds);
+    const banner1Config = {
+      width: banner1Bounds.width,
+      height: banner1Bounds.height,
+      x: banner1Bounds.x,
+      y: banner1Bounds.y,
+      fullscreen: true,
+      frame: false,
+      webPreferences: {
+        preload: BANNER_PRELOAD_WEBPACK_ENTRY,
+      },
+      title: 'JoyRide Banner 1',
+      show: true,
+    };
+    if (iconPath && fs.existsSync(iconPath)) {
+      banner1Config.icon = iconPath;
+    }
+    bannerWindow1 = new BrowserWindow(banner1Config);
+    bannerWindow1.loadURL(BANNER_WEBPACK_ENTRY + '?banner=1');
+    bannerWindow1.setMenu(null);
+    if (!app.isPackaged) bannerWindow1.webContents.openDevTools({ mode: 'detach' });
+    setTimeout(() => {
+      if (bannerWindow1 && !bannerWindow1.isDestroyed()) {
+        bannerWindow1.webContents.send('set-font-color', settings.fontColor);
+      }
+    }, 1000);
+  } else {
+    bannerWindow1 = null;
   }
-  
-  bannerWindow1 = new BrowserWindow(banner1Config);
-  bannerWindow1.loadURL(BANNER_WEBPACK_ENTRY + '?banner=1');
-  bannerWindow1.setMenu(null);
-  if (!app.isPackaged) bannerWindow1.webContents.openDevTools({ mode: 'detach' });
 
+  // Banner 2 Window (only if enabled)
   if (settings.banner2Enabled) {
     const banner2Bounds = getDisplayBounds(settings.banner2Display);
     console.log('Creating Banner 2 with bounds:', banner2Bounds);
-    
     const banner2Config = {
       width: banner2Bounds.width,
       height: banner2Bounds.height,
@@ -312,21 +323,22 @@ ipcMain.handle('apply-display-settings', async (event, settings) => {
       webPreferences: {
         preload: BANNER_PRELOAD_WEBPACK_ENTRY,
       },
-      title: 'Joyride Banner 2',
+      title: 'JoyRide Banner 2',
       show: true,
     };
-    
-    // Only add icon if we have a valid path
     if (iconPath && fs.existsSync(iconPath)) {
       banner2Config.icon = iconPath;
     }
-    
     bannerWindow2 = new BrowserWindow(banner2Config);
     bannerWindow2.loadURL(BANNER_WEBPACK_ENTRY + '?banner=2');
     bannerWindow2.setMenu(null);
     if (!app.isPackaged) bannerWindow2.webContents.openDevTools({ mode: 'detach' });
+    setTimeout(() => {
+      if (bannerWindow2 && !bannerWindow2.isDestroyed()) {
+        bannerWindow2.webContents.send('set-font-color', settings.fontColor);
+      }
+    }, 1000);
   } else {
-    console.log('Banner 2 is disabled, not creating window');
     bannerWindow2 = null;
   }
 
@@ -392,6 +404,15 @@ ipcMain.on('toggle-banner-number', (event, { isVisible }) => {
   }
   if (bannerWindow2 && !bannerWindow2.isDestroyed() && currentSettings.banner2Enabled) {
     bannerWindow2.webContents.send('set-banner-number-visibility', isVisible);
+  }
+});
+
+ipcMain.on('update-font-color', (event, fontColor) => {
+  if (bannerWindow1 && !bannerWindow1.isDestroyed()) {
+    bannerWindow1.webContents.send('set-font-color', fontColor);
+  }
+  if (bannerWindow2 && !bannerWindow2.isDestroyed() && currentSettings.banner2Enabled) {
+    bannerWindow2.webContents.send('set-font-color', fontColor);
   }
 });
 
