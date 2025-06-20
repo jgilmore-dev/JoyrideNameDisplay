@@ -6,9 +6,13 @@ JoyRide is a car club exclusively for kids with special needs, and this desktop 
 
 *"People will forget what you said, people will forget what you did, but people will never forget how you made them feel." - Maya Angelou*
 
-## Quick Download
+## Quick Downloads
 
-**[Download Latest Windows Installer](https://github.com/jgilmore-dev/JoyrideNameDisplay/releases)**
+- **[Download Latest Windows Installer](https://github.com/jgilmore-dev/JoyrideNameDisplay/releases/latest/download/JoyRide.Cars.Name.Display-x64.exe)**
+- **[Download Latest macOS App](https://github.com/jgilmore-dev/JoyrideNameDisplay/releases/latest/download/JoyRide-Cars-Name-Display.dmg)**
+- **[Download Latest Linux .deb Package](https://github.com/jgilmore-dev/JoyrideNameDisplay/releases/latest/download/joyridenamedisplay_1.3.0_amd64.deb)**
+
+*For other package types (.zip, .rpm), see the [full releases page](https://github.com/jgilmore-dev/JoyrideNameDisplay/releases).*
 
 ## Creating VIP Experiences
 
@@ -40,8 +44,9 @@ This application ensures every child gets the red carpet treatment they deserve,
 
 ## System Requirements
 
-- **Windows 10/11** (64-bit) - Primary platform
-- **Linux** (64-bit) - Experimental support
+- **Windows 10/11** (64-bit)
+- **macOS** (Intel & Apple Silicon, 64-bit)
+- **Linux** (Debian/Ubuntu & Fedora/RPM, 64-bit)
 - **4GB RAM** minimum
 - **100MB** disk space
 - **Multiple monitors** (recommended for dual banners)
@@ -49,17 +54,22 @@ This application ensures every child gets the red carpet treatment they deserve,
 ## Installation
 
 ### Windows
-1. Download the installer from our [Releases page](https://github.com/jgilmore-dev/JoyrideNameDisplay/releases)
-2. Run the installer and follow the setup wizard
-3. Launch from your Start Menu or Desktop
-4. Import your member data and start creating joy
+1. Download the latest `.exe` installer from the [Releases page](https://github.com/jgilmore-dev/JoyrideNameDisplay/releases).
+2. Run the installer and follow the setup wizard.
+3. Launch from your Start Menu or Desktop.
+
+### macOS
+1. Download the latest `.dmg` file from the [Releases page](https://github.com/jgilmore-dev/JoyrideNameDisplay/releases).
+2. Open the `.dmg` file.
+3. Drag the "JoyRide Cars Name Display" application into your "Applications" folder.
+4. Launch from your Applications folder.
 
 ### Linux
-1. Download the Linux package from our [Releases page](https://github.com/jgilmore-dev/JoyrideNameDisplay/releases)
-2. Extract the package and run the executable
-3. Import your member data and start creating joy
-
-*Note: Linux support is experimental. Please report any issues you encounter.*
+1. Download the appropriate package for your distribution (`.deb` for Debian/Ubuntu, `.rpm` for Fedora/CentOS) from the [Releases page](https://github.com/jgilmore-dev/JoyrideNameDisplay/releases).
+2. Install the package using your system's package manager.
+   - For `.deb`: `sudo dpkg -i joyridenamedisplay_*.deb`
+   - For `.rpm`: `sudo rpm -i joyridenamedisplay_*.rpm`
+3. Launch the application from your system's application menu.
 
 ## Member Data Format
 
