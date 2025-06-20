@@ -16,11 +16,19 @@
   --header-color: #333;
 }
 
+html, body, #root {
+  height: 100%;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  background-color: #000;
+  overflow: hidden; /* Prevent scrollbars from appearing */
+}
+
 body {
   font-family: 'GothamRnd', sans-serif;
   background-color: var(--background-color);
   color: var(--text-color);
-  margin: 0;
 }
 
 h1, h2, h3 {
@@ -91,6 +99,14 @@ input[type="text"] {
 
 .waiting-text {
   font-size: 2rem;
+  width: 100%;
+}
+
+.slideshow-image {
+  width: 100vw;
+  height: 100vh;
+  object-fit: cover; /* Ensures the image covers the entire area without distortion */
+  background-color: #000; /* Black background behind the image */
 }
 
 /* Control Panel Component Styles */
