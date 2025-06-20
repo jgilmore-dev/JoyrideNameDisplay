@@ -1,11 +1,13 @@
 import React, { useState } from 'react';
 import MemberList from './memberList.jsx';
 import { formatFirstNames } from './utils.js';
+import AddMemberForm from './addMemberForm.jsx';
 
 const ControlPanel = () => {
   const [members, setMembers] = useState([]);
   const [error, setError] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
+  const [showAddForm, setShowAddForm] = useState(false);
 
   const handleLoadCsv = async () => {
     const result = await window.electronAPI.invoke('load-csv');
@@ -16,6 +18,11 @@ const ControlPanel = () => {
       setMembers(result.data);
       setError('');
     }
+  };
+
+  const handleAddMember = (newMember) => {
+    setMembers([newMember, ...members]);
+    setShowAddForm(false); // Hide form after adding
   };
 
   const handleSelectMember = (member, banner) => {
@@ -40,9 +47,14 @@ const ControlPanel = () => {
       
       <div style={{ marginTop: 16, display: 'flex', gap: 8 }}>
         <button onClick={handleLoadCsv}>Load Member CSV</button>
+        <button onClick={() => setShowAddForm(!showAddForm)}>
+          {showAddForm ? 'Cancel Adding' : 'Add New Member'}
+        </button>
         <button onClick={() => window.electronAPI.send('banner-clear', { banner: 1 })}>Clear Banner 1</button>
         <button onClick={() => window.electronAPI.send('banner-clear', { banner: 2 })}>Clear Banner 2</button>
       </div>
+      
+      {showAddForm && <AddMemberForm onAddMember={handleAddMember} onCancel={() => setShowAddForm(false)} />}
       
       {error && <p style={{ color: 'red' }}>{error}</p>}
 
