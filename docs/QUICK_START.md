@@ -21,9 +21,11 @@ JoyRide is a car club created just for kids with special needs and their familie
 3. Review your JoyRide members in the list—every name is a VIP!
 
 ### 4. Set Up Your Displays
-1. Choose which monitor to use for each banner
-2. Enable or disable Banner 2 as needed
-3. Click "Start Banner 1" to begin sharing smiles
+1. Open the Settings menu (⚙️)
+2. Enable Banner 1 and/or Banner 2 as needed (both are disabled by default)
+3. Select which monitor to use for each banner (display selection is always available)
+4. Choose your preferred font color for the banners using the color picker or by entering a hex value
+5. Click "Start Banner 1" or "Start Banner 2" to begin sharing smiles
 
 ### 5. Celebrate Every Name
 - Use "Next" and "Previous" to navigate through your members
@@ -42,5 +44,9 @@ Brown,Sarah,Alex,Emma
 ## Need a Hand?
 - See the full [User Guide](USER_GUIDE.md) for detailed instructions
 - Check the troubleshooting section for common issues
+
+**New in v1.1.0:**
+- Both banners are disabled by default and can be enabled independently in Settings
+- You can now customize the font color for banners using a color picker or by entering a hex value (e.g., #8B9091)
 
 Thank you for helping us make every JoyRide event special. Kids. Cars. Smiles. 

@@ -75,21 +75,27 @@ Brown,Sarah,Alex,Emma
 ## Setting Up Your Event Displays
 
 ### Banner Settings
-- **Banner 1**: Primary display (always active)
-- **Banner 2**: Secondary display (optional)
-- **Display Selection**: Choose which monitor each banner appears on
+- **Banner 1** and **Banner 2** can now both be enabled or disabled independently in the Settings menu (⚙️)
+- By default, both banners are disabled when you first open the app
+- **Display Selection**: Choose which monitor each banner appears on (display selection is always available, even when banners are disabled)
 
 ### Display Options
-- Enable or disable Banner 2 as needed
+- Enable or disable Banner 1 and Banner 2 as needed
 - Select which monitor to use for each banner
 - Auto-detect available displays for easy setup
+
+### Font Color Customization (New in v1.1.0)
+- You can now customize the font color for the names displayed on the banners
+- Use the color picker or manually enter a hex value (e.g., #8B9091) in the Settings menu
+- The color is applied instantly to both banners and is saved for future sessions
 
 ## Sharing the Joy: Using the Banners
 
 ### Starting the Displays
 1. Configure your display settings
-2. Click "Start Banner 1" to launch the main display
-3. Click "Start Banner 2" to launch the secondary display (if enabled)
+2. Enable Banner 1 and/or Banner 2 as needed
+3. Click "Start Banner 1" to launch the main display
+4. Click "Start Banner 2" to launch the secondary display (if enabled)
 
 ### Display Features
 - **Automatic Cycling**: Names cycle through automatically, so every child gets their moment

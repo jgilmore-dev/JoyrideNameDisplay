@@ -34,16 +34,13 @@ Welcome to another update from the JoyRide family! JoyRide is a car club created
 
 ## Example Release Notes
 
-### Version 1.0.0 - Initial Release
+### Version 1.1.0 - Feature & Usability Update
 
 ### 🎉 What's New
-- Initial release of JoyRide Event Display Application
-- CSV import functionality for participant data
-- Multi-screen display support with configurable monitors
-- Manual and automatic name cycling
-- Slideshow mode for continuous display
-- Member management (add, edit, remove, reorder)
-- Branded JoyRide icons and interface
+- Banner 1 can now be enabled or disabled independently (both banners are disabled by default)
+- Display selection is always available, even when banners are disabled
+- Font color customization for banners (color picker and manual hex input)
+- Collapsible and responsive control panel sections for improved usability
 
 ### 🔧 Technical Features
 - Electron-based desktop application
