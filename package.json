@@ -9,7 +9,12 @@
     "package": "electron-forge package",
     "make": "electron-forge make",
     "publish": "electron-forge publish",
-    "lint": "echo \"No linting configured\""
+    "lint": "echo \"No linting configured\"",
+    "icons": "node scripts/convert-icons.js",
+    "scrape-icons": "node scripts/scrape-icons.js",
+    "download-icons": "node scripts/download-joyride-icons.js",
+    "copy-icons": "node scripts/copy-icons.js",
+    "generate-icons": "node scripts/generate-icons.js"
   },
   "keywords": [],
   "author": "JasonGilmore",
@@ -38,7 +43,10 @@
   "dependencies": {
     "electron-squirrel-startup": "^1.0.1",
     "papaparse": "^5.5.3",
+    "png-to-ico": "^2.1.8",
+    "png2icns": "^0.0.1",
     "react": "^18.3.1",
-    "react-dom": "^18.3.1"
+    "react-dom": "^18.3.1",
+    "sharp": "^0.34.2"
   }
 }

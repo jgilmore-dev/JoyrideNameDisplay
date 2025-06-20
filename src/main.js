@@ -72,22 +72,47 @@ const createWindows = () => {
   loadSettings();
   console.log('Creating windows with settings:', currentSettings);
 
+  // Determine icon path - use PNG as fallback if ICO doesn't exist
+  const assetsDir = path.join(__dirname, 'assets/icons');
+  let iconPath = null;
+  
+  // Check if assets directory exists first
+  if (fs.existsSync(assetsDir)) {
+    iconPath = fs.existsSync(path.join(assetsDir, 'app-icon.ico')) 
+      ? path.join(assetsDir, 'app-icon.ico')
+      : path.join(assetsDir, 'app-icon-512.png');
+  }
+  
+  console.log('Assets directory exists:', fs.existsSync(assetsDir));
+  console.log('Using icon path:', iconPath);
+  if (iconPath) {
+    console.log('Icon file exists:', fs.existsSync(iconPath));
+  }
+
   // Control Panel Window
-  controlPanelWindow = new BrowserWindow({
+  const controlPanelConfig = {
     width: 900,
     height: 700,
     webPreferences: {
       preload: CONTROL_PANEL_PRELOAD_WEBPACK_ENTRY,
     },
     title: 'Joyride Control Panel',
-  });
+  };
+  
+  // Only add icon if we have a valid path
+  if (iconPath && fs.existsSync(iconPath)) {
+    controlPanelConfig.icon = iconPath;
+  }
+  
+  controlPanelWindow = new BrowserWindow(controlPanelConfig);
   controlPanelWindow.loadURL(CONTROL_PANEL_WEBPACK_ENTRY);
   if (!app.isPackaged) controlPanelWindow.webContents.openDevTools({ mode: 'detach' });
 
   // Banner 1 Window
   const banner1Bounds = getDisplayBounds(currentSettings.banner1Display);
   console.log('Creating Banner 1 with bounds:', banner1Bounds);
-  bannerWindow1 = new BrowserWindow({
+  
+  const banner1Config = {
     width: banner1Bounds.width,
     height: banner1Bounds.height,
     x: banner1Bounds.x,
@@ -99,7 +124,14 @@ const createWindows = () => {
     },
     title: 'Joyride Banner 1',
     show: true,
-  });
+  };
+  
+  // Only add icon if we have a valid path
+  if (iconPath && fs.existsSync(iconPath)) {
+    banner1Config.icon = iconPath;
+  }
+  
+  bannerWindow1 = new BrowserWindow(banner1Config);
   bannerWindow1.loadURL(BANNER_WEBPACK_ENTRY + '?banner=1');
   bannerWindow1.setMenu(null);
   if (!app.isPackaged) bannerWindow1.webContents.openDevTools({ mode: 'detach' });
@@ -108,7 +140,8 @@ const createWindows = () => {
   if (currentSettings.banner2Enabled) {
     const banner2Bounds = getDisplayBounds(currentSettings.banner2Display);
     console.log('Creating Banner 2 with bounds:', banner2Bounds);
-    bannerWindow2 = new BrowserWindow({
+    
+    const banner2Config = {
       width: banner2Bounds.width,
       height: banner2Bounds.height,
       x: banner2Bounds.x,
@@ -120,7 +153,14 @@ const createWindows = () => {
       },
       title: 'Joyride Banner 2',
       show: true,
-    });
+    };
+    
+    // Only add icon if we have a valid path
+    if (iconPath && fs.existsSync(iconPath)) {
+      banner2Config.icon = iconPath;
+    }
+    
+    bannerWindow2 = new BrowserWindow(banner2Config);
     bannerWindow2.loadURL(BANNER_WEBPACK_ENTRY + '?banner=2');
     bannerWindow2.setMenu(null);
     if (!app.isPackaged) bannerWindow2.webContents.openDevTools({ mode: 'detach' });
@@ -213,10 +253,28 @@ ipcMain.handle('apply-display-settings', async (event, settings) => {
   // Reset ready windows counter
   readyWindows = 0;
 
+  // Determine icon path - use PNG as fallback if ICO doesn't exist
+  const assetsDir = path.join(__dirname, 'assets/icons');
+  let iconPath = null;
+  
+  // Check if assets directory exists first
+  if (fs.existsSync(assetsDir)) {
+    iconPath = fs.existsSync(path.join(assetsDir, 'app-icon.ico')) 
+      ? path.join(assetsDir, 'app-icon.ico')
+      : path.join(assetsDir, 'app-icon-512.png');
+  }
+  
+  console.log('Assets directory exists:', fs.existsSync(assetsDir));
+  console.log('Using icon path:', iconPath);
+  if (iconPath) {
+    console.log('Icon file exists:', fs.existsSync(iconPath));
+  }
+
   // Create new banner windows with updated settings
   const banner1Bounds = getDisplayBounds(settings.banner1Display);
   console.log('Creating Banner 1 with bounds:', banner1Bounds);
-  bannerWindow1 = new BrowserWindow({
+  
+  const banner1Config = {
     width: banner1Bounds.width,
     height: banner1Bounds.height,
     x: banner1Bounds.x,
@@ -228,7 +286,14 @@ ipcMain.handle('apply-display-settings', async (event, settings) => {
     },
     title: 'Joyride Banner 1',
     show: true,
-  });
+  };
+  
+  // Only add icon if we have a valid path
+  if (iconPath && fs.existsSync(iconPath)) {
+    banner1Config.icon = iconPath;
+  }
+  
+  bannerWindow1 = new BrowserWindow(banner1Config);
   bannerWindow1.loadURL(BANNER_WEBPACK_ENTRY + '?banner=1');
   bannerWindow1.setMenu(null);
   if (!app.isPackaged) bannerWindow1.webContents.openDevTools({ mode: 'detach' });
@@ -236,7 +301,8 @@ ipcMain.handle('apply-display-settings', async (event, settings) => {
   if (settings.banner2Enabled) {
     const banner2Bounds = getDisplayBounds(settings.banner2Display);
     console.log('Creating Banner 2 with bounds:', banner2Bounds);
-    bannerWindow2 = new BrowserWindow({
+    
+    const banner2Config = {
       width: banner2Bounds.width,
       height: banner2Bounds.height,
       x: banner2Bounds.x,
@@ -248,7 +314,14 @@ ipcMain.handle('apply-display-settings', async (event, settings) => {
       },
       title: 'Joyride Banner 2',
       show: true,
-    });
+    };
+    
+    // Only add icon if we have a valid path
+    if (iconPath && fs.existsSync(iconPath)) {
+      banner2Config.icon = iconPath;
+    }
+    
+    bannerWindow2 = new BrowserWindow(banner2Config);
     bannerWindow2.loadURL(BANNER_WEBPACK_ENTRY + '?banner=2');
     bannerWindow2.setMenu(null);
     if (!app.isPackaged) bannerWindow2.webContents.openDevTools({ mode: 'detach' });

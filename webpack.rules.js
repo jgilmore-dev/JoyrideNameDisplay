@@ -26,6 +26,14 @@ module.exports = [
       },
     },
   },
+  // Copy icon files to build directory
+  {
+    test: /\.(ico|png|webp|svg)$/,
+    type: 'asset/resource',
+    generator: {
+      filename: 'assets/icons/[name][ext]'
+    }
+  },
   // Put your webpack loader rules in this array.  This is where you would put
   // your ts-loader configuration for instance:
   /**

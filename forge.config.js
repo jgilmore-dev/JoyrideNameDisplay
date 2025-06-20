@@ -1,15 +1,28 @@
 const { FusesPlugin } = require('@electron-forge/plugin-fuses');
 const { FuseV1Options, FuseVersion } = require('@electron/fuses');
+const fs = require('fs');
+const path = require('path');
+
+// Determine icon path - use PNG as fallback if ICO doesn't exist
+const iconPath = fs.existsSync('./src/assets/icons/app-icon.ico') 
+  ? './src/assets/icons/app-icon.ico'
+  : './src/assets/icons/app-icon-512.png';
 
 module.exports = {
   packagerConfig: {
     asar: true,
+    icon: iconPath, // Windows icon
+    // macOS icon (if needed later)
+    // icon: './src/assets/icons/app-icon.icns',
   },
   rebuildConfig: {},
   makers: [
     {
       name: '@electron-forge/maker-squirrel',
-      config: {},
+      config: {
+        iconUrl: 'https://raw.githubusercontent.com/your-repo/joyride-name-display/main/src/assets/icons/app-icon.ico',
+        setupIcon: './src/assets/icons/app-icon.ico',
+      },
     },
     {
       name: '@electron-forge/maker-zip',
@@ -17,11 +30,19 @@ module.exports = {
     },
     {
       name: '@electron-forge/maker-deb',
-      config: {},
+      config: {
+        options: {
+          icon: './src/assets/icons/app-icon-512.png',
+        },
+      },
     },
     {
       name: '@electron-forge/maker-rpm',
-      config: {},
+      config: {
+        options: {
+          icon: './src/assets/icons/app-icon-512.png',
+        },
+      },
     },
   ],
   plugins: [
