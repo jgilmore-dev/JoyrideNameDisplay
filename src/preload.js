@@ -18,7 +18,13 @@ contextBridge.exposeInMainWorld('electronAPI', {
     }
   },
   invoke: (channel, ...args) => {
-    const validChannels = ['load-csv'];
+    const validChannels = [
+      'load-csv',
+      'get-members',
+      'add-member',
+      'update-member',
+      'mark-as-displayed',
+    ];
     if (validChannels.includes(channel)) {
       return ipcRenderer.invoke(channel, ...args);
     }

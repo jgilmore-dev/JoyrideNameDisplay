@@ -1,31 +1,52 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import MemberList from './memberList.jsx';
 import { formatFirstNames } from './utils.js';
 import AddMemberForm from './addMemberForm.jsx';
+import EditMemberForm from './editMemberForm.jsx';
 
 const ControlPanel = () => {
   const [members, setMembers] = useState([]);
   const [error, setError] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
   const [showAddForm, setShowAddForm] = useState(false);
+  const [showDisplayed, setShowDisplayed] = useState(false);
+  const [editingMember, setEditingMember] = useState(null);
+
+  const fetchMembers = async () => {
+    const memberList = await window.electronAPI.invoke('get-members');
+    setMembers(memberList);
+  };
+
+  // Fetch initial members on component mount
+  useEffect(() => {
+    fetchMembers();
+  }, []);
 
   const handleLoadCsv = async () => {
     const result = await window.electronAPI.invoke('load-csv');
     if (result.error) {
       setError(result.error);
-      setMembers([]);
-    } else {
-      setMembers(result.data);
-      setError('');
     }
+    fetchMembers(); // Refresh list after loading
   };
 
-  const handleAddMember = (newMember) => {
-    setMembers([newMember, ...members]);
+  const handleAddMember = async (newMember) => {
+    await window.electronAPI.invoke('add-member', newMember);
     setShowAddForm(false); // Hide form after adding
+    fetchMembers(); // Refresh list
   };
 
-  const handleSelectMember = (member, banner) => {
+  const handleEditMember = (member) => {
+    setEditingMember(member);
+  };
+
+  const handleUpdateMember = async (updatedMember) => {
+    await window.electronAPI.invoke('update-member', updatedMember);
+    setEditingMember(null); // Close the form
+    fetchMembers(); // Refresh list
+  };
+
+  const handleSelectMember = async (member, banner) => {
     const firstNames = formatFirstNames(member);
 
     const nameData = {
@@ -34,11 +55,22 @@ const ControlPanel = () => {
     };
 
     window.electronAPI.send('banner-display', { banner, nameData });
+
+    // Mark member as displayed in the central data store
+    await window.electronAPI.invoke('mark-as-displayed', member.id);
+    fetchMembers(); // Refresh list
   };
 
-  const filteredMembers = members.filter(member => {
-    const fullName = `${member.Member1 || ''} ${member.Member2 || ''} ${member.Member3 || ''} ${member.Member4 || ''} ${member.LastName}`.toLowerCase();
-    return fullName.includes(searchTerm.toLowerCase());
+  const membersToDisplay = members.filter(member => {
+    const isNotDisplayed = !member.displayed;
+    const matchesSearch = `${member.Member1 || ''} ${member.Member2 || ''} ${member.Member3 || ''} ${member.Member4 || ''} ${member.LastName}`.toLowerCase().includes(searchTerm.toLowerCase());
+    return isNotDisplayed && matchesSearch;
+  });
+
+  const recentlyDisplayedMembers = members.filter(member => {
+    const isDisplayed = member.displayed;
+    const matchesSearch = `${member.Member1 || ''} ${member.Member2 || ''} ${member.Member3 || ''} ${member.Member4 || ''} ${member.LastName}`.toLowerCase().includes(searchTerm.toLowerCase());
+    return isDisplayed && matchesSearch;
   });
 
   return (
@@ -58,7 +90,7 @@ const ControlPanel = () => {
       
       {error && <p style={{ color: 'red' }}>{error}</p>}
 
-      {members.length > 0 && (
+      {members.length > 0 ? (
         <>
           <div style={{ marginTop: 16 }}>
             <input
@@ -67,9 +99,30 @@ const ControlPanel = () => {
               style={{ width: '100%', padding: 8, boxSizing: 'border-box' }}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
+            <label style={{ marginLeft: 8 }}>
+              <input
+                type="checkbox"
+                checked={showDisplayed}
+                onChange={(e) => setShowDisplayed(e.target.checked)}
+              />
+              Show Recently Displayed
+            </label>
           </div>
-          <MemberList members={filteredMembers} onSelectMember={handleSelectMember} />
+          <MemberList
+            members={showDisplayed ? recentlyDisplayedMembers : membersToDisplay}
+            onSelectMember={handleSelectMember}
+            onEditMember={handleEditMember}
+          />
+          {editingMember && (
+            <EditMemberForm
+              member={editingMember}
+              onUpdateMember={handleUpdateMember}
+              onCancel={() => setEditingMember(null)}
+            />
+          )}
         </>
+      ) : (
+        <p style={{ marginTop: 16 }}>No members loaded. Click "Load Member CSV" to begin.</p>
       )}
     </div>
   );

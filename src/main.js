@@ -1,6 +1,6 @@
 const { app, BrowserWindow, ipcMain } = require('electron');
 const path = require('node:path');
-const { loadData } = require('./dataSource');
+const dataSource = require('./dataSource');
 
 // Handle creating/removing shortcuts on Windows when installing/uninstalling.
 if (require('electron-squirrel-startup')) {
@@ -65,9 +65,26 @@ ipcMain.on('banner-clear', (event, { banner }) => {
   }
 });
 
+// Data source IPC handlers
 ipcMain.handle('load-csv', async () => {
-  const result = await loadData();
+  const result = await dataSource.loadDataFromCsv();
   return result;
+});
+
+ipcMain.handle('get-members', () => {
+  return dataSource.getMembers();
+});
+
+ipcMain.handle('add-member', (event, newMember) => {
+  return dataSource.addMember(newMember);
+});
+
+ipcMain.handle('update-member', (event, updatedMember) => {
+  return dataSource.updateMember(updatedMember);
+});
+
+ipcMain.handle('mark-as-displayed', (event, memberId) => {
+  return dataSource.markAsDisplayed(memberId);
 });
 
 // This method will be called when Electron has finished
