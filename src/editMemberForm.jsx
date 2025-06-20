@@ -36,36 +36,36 @@ const EditMemberForm = ({ member, onUpdateMember, onCancel }) => {
   if (!member) return null;
 
   return (
-    <div style={{
-      position: 'fixed', top: '50%', left: '50%', transform: 'translate(-50%, -50%)',
-      background: 'white', padding: 32, border: '1px solid #ccc', zIndex: 1000,
-      boxShadow: '0 4px 8px rgba(0,0,0,0.2)'
-    }}>
-      <h3>Edit Member/Family</h3>
-      <form onSubmit={handleSubmit}>
-        <div style={{ marginBottom: 8 }}>
-          <label>Last Name: </label>
-          <input type="text" value={lastName} onChange={(e) => setLastName(e.target.value)} required />
-        </div>
-        <div style={{ marginBottom: 8 }}>
-          <label>First Name 1: </label>
-          <input type="text" value={member1} onChange={(e) => setMember1(e.target.value)} required />
-        </div>
-        <div style={{ marginBottom: 8 }}>
-          <label>First Name 2: </label>
-          <input type="text" value={member2} onChange={(e) => setMember2(e.target.value)} />
-        </div>
-        <div style={{ marginBottom: 8 }}>
-          <label>First Name 3: </label>
-          <input type="text" value={member3} onChange={(e) => setMember3(e.target.value)} />
-        </div>
-        <div style={{ marginBottom: 8 }}>
-          <label>First Name 4: </label>
-          <input type="text" value={member4} onChange={(e) => setMember4(e.target.value)} />
-        </div>
-        <button type="submit">Update Member</button>
-        <button type="button" onClick={onCancel} style={{ marginLeft: 8 }}>Cancel</button>
-      </form>
+    <div className="modal-backdrop">
+      <div className="modal-content">
+        <h3>Edit Member/Family</h3>
+        <form onSubmit={handleSubmit}>
+          <div className="form-field">
+            <label>Last Name: </label>
+            <input type="text" value={lastName} onChange={(e) => setLastName(e.target.value)} required />
+          </div>
+          <div className="form-field">
+            <label>First Name 1: </label>
+            <input type="text" value={member1} onChange={(e) => setMember1(e.target.value)} required />
+          </div>
+          <div className="form-field">
+            <label>First Name 2: </label>
+            <input type="text" value={member2} onChange={(e) => setMember2(e.target.value)} />
+          </div>
+          <div className="form-field">
+            <label>First Name 3: </label>
+            <input type="text" value={member3} onChange={(e) => setMember3(e.target.value)} />
+          </div>
+          <div className="form-field">
+            <label>First Name 4: </label>
+            <input type="text" value={member4} onChange={(e) => setMember4(e.target.value)} />
+          </div>
+          <div className="form-actions">
+            <button type="submit">Update Member</button>
+            <button type="button" onClick={onCancel}>Cancel</button>
+          </div>
+        </form>
+      </div>
     </div>
   );
 };

@@ -74,10 +74,10 @@ const ControlPanel = () => {
   });
 
   return (
-    <div style={{ padding: 32, fontFamily: 'sans-serif' }}>
+    <div className="container">
       <h1>Joyride Control Panel</h1>
       
-      <div style={{ marginTop: 16, display: 'flex', gap: 8 }}>
+      <div className="button-group">
         <button onClick={handleLoadCsv}>Load Member CSV</button>
         <button onClick={() => setShowAddForm(!showAddForm)}>
           {showAddForm ? 'Cancel Adding' : 'Add New Member'}
@@ -88,18 +88,17 @@ const ControlPanel = () => {
       
       {showAddForm && <AddMemberForm onAddMember={handleAddMember} onCancel={() => setShowAddForm(false)} />}
       
-      {error && <p style={{ color: 'red' }}>{error}</p>}
+      {error && <p className="error-text">{error}</p>}
 
       {members.length > 0 ? (
         <>
-          <div style={{ marginTop: 16 }}>
+          <div className="search-container">
             <input
               type="text"
               placeholder="Search names..."
-              style={{ width: '100%', padding: 8, boxSizing: 'border-box' }}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
-            <label style={{ marginLeft: 8 }}>
+            <label>
               <input
                 type="checkbox"
                 checked={showDisplayed}
@@ -122,7 +121,7 @@ const ControlPanel = () => {
           )}
         </>
       ) : (
-        <p style={{ marginTop: 16 }}>No members loaded. Click "Load Member CSV" to begin.</p>
+        <p className="info-text">No members loaded. Click "Load Member CSV" to begin.</p>
       )}
     </div>
   );

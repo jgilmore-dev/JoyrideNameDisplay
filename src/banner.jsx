@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import useFitText from './useFitText.js';
 
 function getBannerNumber() {
   const params = new URLSearchParams(window.location.search);
@@ -8,6 +9,7 @@ function getBannerNumber() {
 const Banner = () => {
   const [displayName, setDisplayName] = useState(null);
   const bannerNumber = getBannerNumber();
+  const { fontSize, ref } = useFitText(displayName?.firstLine);
 
   useEffect(() => {
     // This check is important because the preload script might not be available in all contexts (like testing).
@@ -22,15 +24,21 @@ const Banner = () => {
   }, []);
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100vh', fontFamily: 'sans-serif', background: '#222', color: '#fff' }}>
-      <h1 style={{ fontSize: 64 }}>Banner {bannerNumber}</h1>
+    <div className="banner-container">
+      <div className="banner-header">Banner {bannerNumber}</div>
       {displayName ? (
-        <>
-          <div style={{ fontSize: 72, fontWeight: 'bold' }}>{displayName.firstLine}</div>
-          <div style={{ fontSize: 48 }}>{displayName.secondLine}</div>
-        </>
+        <div className="name-display">
+          <div
+            ref={ref}
+            className="first-name"
+            style={{ fontSize: `${fontSize}px` }}
+          >
+            {displayName.firstLine}
+          </div>
+          <div className="last-name">{displayName.secondLine}</div>
+        </div>
       ) : (
-        <p style={{ fontSize: 24 }}>Waiting for name display...</p>
+        <p className="waiting-text">Waiting for name display...</p>
       )}
     </div>
   );

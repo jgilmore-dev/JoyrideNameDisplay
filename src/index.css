@@ -1,7 +1,215 @@
+@font-face {
+  font-family: 'GothamRnd';
+  src: url('./assets/fonts/GothamRnd-Bold.otf') format('opentype');
+  font-weight: bold;
+  font-style: normal;
+}
+
+:root {
+  --text-color: #8B9091;
+  --background-color: #F0F0F0;
+  --background-color-dark: #222;
+  --accent-color: #007BFF;
+  --accent-color-hover: #0056b3;
+  --border-color: #ccc;
+  --form-background: #fff;
+  --header-color: #333;
+}
+
 body {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica,
-    Arial, sans-serif;
-  margin: auto;
-  max-width: 38rem;
+  font-family: 'GothamRnd', sans-serif;
+  background-color: var(--background-color);
+  color: var(--text-color);
+  margin: 0;
+}
+
+h1, h2, h3 {
+  color: var(--header-color);
+}
+
+button {
+  background-color: var(--accent-color);
+  color: white;
+  border: none;
+  padding: 10px 15px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-family: 'GothamRnd', sans-serif;
+}
+
+button:hover {
+  background-color: var(--accent-color-hover);
+}
+
+input[type="text"] {
+  padding: 8px;
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+}
+
+/* Banner Component Styles */
+.banner-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+  background-color: var(--background-color-dark);
+  color: var(--text-color);
+  text-align: center;
   padding: 2rem;
+  box-sizing: border-box;
+}
+
+.banner-header {
+  position: absolute;
+  top: 1rem;
+  left: 1rem;
+  font-size: 2rem;
+  opacity: 0.5;
+}
+
+.name-display {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+}
+
+.first-name {
+  font-weight: bold;
+  line-height: 1.1;
+  width: 100%;
+  white-space: nowrap; /* Important for fitting algorithm */
+}
+
+.last-name {
+  font-size: 10rem; /* Increased from 8rem */
+  margin-top: 1rem;
+}
+
+.waiting-text {
+  font-size: 2rem;
+}
+
+/* Control Panel Component Styles */
+.container {
+  padding: 2rem;
+}
+
+.button-group {
+  margin-top: 1rem;
+  display: flex;
+  gap: 0.5rem;
+}
+
+.error-text {
+  color: #D8000C;
+  background-color: #FFD2D2;
+  padding: 0.5rem;
+  border-radius: 4px;
+  margin-top: 1rem;
+}
+
+.info-text {
+  margin-top: 1rem;
+  font-style: italic;
+}
+
+.search-container {
+  margin-top: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.search-container input[type="text"] {
+  flex-grow: 1;
+}
+
+/* Form Styles */
+.form-container, .modal-content {
+  margin-top: 1rem;
+  padding: 1rem;
+  background-color: var(--form-background);
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+}
+
+.form-field {
+  margin-bottom: 0.5rem;
+  display: flex;
+  flex-direction: column;
+}
+
+.form-field label {
+  margin-bottom: 0.25rem;
+  font-weight: bold;
+  color: var(--header-color);
+}
+
+.form-actions {
+  margin-top: 1rem;
+  display: flex;
+  gap: 0.5rem;
+}
+
+/* Modal Styles */
+.modal-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.modal-content {
+  width: 90%;
+  max-width: 500px;
+}
+
+/* Member List Styles */
+.list-container {
+  margin-top: 1rem;
+}
+
+.table-wrapper {
+  max-height: 400px;
+  overflow-y: auto;
+  border: 1px solid var(--border-color);
+}
+
+.member-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.member-table th, .member-table td {
+  padding: 0.5rem;
+  text-align: left;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.member-table th {
+  background-color: var(--background-color);
+  position: sticky;
+  top: 0;
+}
+
+.actions-cell {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.actions-header {
+  text-align: right;
+}
+.actions-cell button {
+  padding: 5px 10px;
 }
