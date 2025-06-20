@@ -1,7 +1,7 @@
 import React from 'react';
 import { formatFirstNames } from './utils.js';
 
-const MemberList = ({ members, onSelectMember, onEditMember }) => (
+const MemberList = ({ members, onSelectMember, onEditMember, banner2Enabled = true }) => (
   <div className="list-container">
     <h2>Member List</h2>
     <div className="table-wrapper">
@@ -20,7 +20,9 @@ const MemberList = ({ members, onSelectMember, onEditMember }) => (
               <td>{formatFirstNames(member)}</td>
               <td className="actions-cell">
                 <button onClick={() => onSelectMember(member, 1)}>To Banner 1</button>
-                <button onClick={() => onSelectMember(member, 2)}>To Banner 2</button>
+                {banner2Enabled && (
+                  <button onClick={() => onSelectMember(member, 2)}>To Banner 2</button>
+                )}
                 <button onClick={() => onEditMember(member)}>Edit</button>
               </td>
             </tr>

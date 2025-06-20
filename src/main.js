@@ -1,5 +1,6 @@
-const { app, BrowserWindow, ipcMain, session, protocol } = require('electron');
+const { app, BrowserWindow, ipcMain, session, protocol, screen } = require('electron');
 const path = require('node:path');
+const fs = require('fs');
 const dataSource = require('./dataSource');
 const mediaManager = require('./mediaManager');
 
@@ -11,8 +12,66 @@ if (require('electron-squirrel-startup')) {
 let controlPanelWindow;
 let bannerWindow1;
 let bannerWindow2;
+let currentSettings = {
+  banner2Enabled: false,
+  banner1Display: 0,
+  banner2Display: 1
+};
+
+// Load settings from file
+const loadSettings = () => {
+  try {
+    const settingsPath = path.join(app.getPath('userData'), 'settings.json');
+    if (fs.existsSync(settingsPath)) {
+      const settingsData = fs.readFileSync(settingsPath, 'utf8');
+      const loadedSettings = JSON.parse(settingsData);
+      currentSettings = { ...currentSettings, ...loadedSettings };
+      console.log('Loaded settings:', currentSettings);
+    } else {
+      console.log('No settings file found, using defaults:', currentSettings);
+    }
+  } catch (error) {
+    console.error('Error loading settings:', error);
+  }
+};
+
+// Save settings to file
+const saveSettings = (settings) => {
+  try {
+    const settingsPath = path.join(app.getPath('userData'), 'settings.json');
+    fs.writeFileSync(settingsPath, JSON.stringify(settings, null, 2));
+    currentSettings = settings;
+  } catch (error) {
+    console.error('Error saving settings:', error);
+  }
+};
+
+// Get display bounds for a specific display index
+const getDisplayBounds = (displayIndex) => {
+  const displays = screen.getAllDisplays();
+  if (displayIndex >= 0 && displayIndex < displays.length) {
+    return displays[displayIndex].bounds;
+  }
+  // Fallback to primary display
+  return displays[0].bounds;
+};
+
+// Get available displays information
+const getAvailableDisplays = () => {
+  const displays = screen.getAllDisplays();
+  return displays.map((display, index) => ({
+    index,
+    bounds: display.bounds,
+    isPrimary: display.bounds.x === 0 && display.bounds.y === 0,
+    name: `Display ${index + 1}${display.bounds.x === 0 && display.bounds.y === 0 ? ' (Primary)' : ''}`
+  }));
+};
 
 const createWindows = () => {
+  // Load settings before creating windows
+  loadSettings();
+  console.log('Creating windows with settings:', currentSettings);
+
   // Control Panel Window
   controlPanelWindow = new BrowserWindow({
     width: 900,
@@ -26,9 +85,13 @@ const createWindows = () => {
   if (!app.isPackaged) controlPanelWindow.webContents.openDevTools({ mode: 'detach' });
 
   // Banner 1 Window
+  const banner1Bounds = getDisplayBounds(currentSettings.banner1Display);
+  console.log('Creating Banner 1 with bounds:', banner1Bounds);
   bannerWindow1 = new BrowserWindow({
-    width: 1280,
-    height: 720,
+    width: banner1Bounds.width,
+    height: banner1Bounds.height,
+    x: banner1Bounds.x,
+    y: banner1Bounds.y,
     fullscreen: true,
     frame: false,
     webPreferences: {
@@ -41,21 +104,30 @@ const createWindows = () => {
   bannerWindow1.setMenu(null);
   if (!app.isPackaged) bannerWindow1.webContents.openDevTools({ mode: 'detach' });
 
-  // Banner 2 Window
-  bannerWindow2 = new BrowserWindow({
-    width: 1280,
-    height: 720,
-    fullscreen: true,
-    frame: false,
-    webPreferences: {
-      preload: BANNER_PRELOAD_WEBPACK_ENTRY,
-    },
-    title: 'Joyride Banner 2',
-    show: true,
-  });
-  bannerWindow2.loadURL(BANNER_WEBPACK_ENTRY + '?banner=2');
-  bannerWindow2.setMenu(null);
-  if (!app.isPackaged) bannerWindow2.webContents.openDevTools({ mode: 'detach' });
+  // Banner 2 Window (only if enabled)
+  if (currentSettings.banner2Enabled) {
+    const banner2Bounds = getDisplayBounds(currentSettings.banner2Display);
+    console.log('Creating Banner 2 with bounds:', banner2Bounds);
+    bannerWindow2 = new BrowserWindow({
+      width: banner2Bounds.width,
+      height: banner2Bounds.height,
+      x: banner2Bounds.x,
+      y: banner2Bounds.y,
+      fullscreen: true,
+      frame: false,
+      webPreferences: {
+        preload: BANNER_PRELOAD_WEBPACK_ENTRY,
+      },
+      title: 'Joyride Banner 2',
+      show: true,
+    });
+    bannerWindow2.loadURL(BANNER_WEBPACK_ENTRY + '?banner=2');
+    bannerWindow2.setMenu(null);
+    if (!app.isPackaged) bannerWindow2.webContents.openDevTools({ mode: 'detach' });
+  } else {
+    console.log('Banner 2 is disabled, not creating window');
+    bannerWindow2 = null;
+  }
 };
 
 // Slideshow Conductor
@@ -105,9 +177,92 @@ ipcMain.handle('banner-clear', (event, { banner }) => {
 let readyWindows = 0;
 ipcMain.on('renderer-ready', (event) => {
   readyWindows++;
-  if (readyWindows === 2) {
+  const expectedWindows = currentSettings.banner2Enabled ? 2 : 1;
+  if (readyWindows === expectedWindows) {
     startSlideshow();
   }
+});
+
+// Settings IPC handlers
+ipcMain.handle('get-settings', () => {
+  return currentSettings;
+});
+
+ipcMain.handle('get-available-displays', () => {
+  return getAvailableDisplays();
+});
+
+ipcMain.handle('save-settings', (event, settings) => {
+  saveSettings(settings);
+  return true;
+});
+
+ipcMain.handle('apply-display-settings', async (event, settings) => {
+  console.log('Applying display settings:', settings);
+  
+  // Close existing banner windows
+  if (bannerWindow1 && !bannerWindow1.isDestroyed()) {
+    console.log('Closing Banner 1 window');
+    bannerWindow1.close();
+  }
+  if (bannerWindow2 && !bannerWindow2.isDestroyed()) {
+    console.log('Closing Banner 2 window');
+    bannerWindow2.close();
+  }
+
+  // Reset ready windows counter
+  readyWindows = 0;
+
+  // Create new banner windows with updated settings
+  const banner1Bounds = getDisplayBounds(settings.banner1Display);
+  console.log('Creating Banner 1 with bounds:', banner1Bounds);
+  bannerWindow1 = new BrowserWindow({
+    width: banner1Bounds.width,
+    height: banner1Bounds.height,
+    x: banner1Bounds.x,
+    y: banner1Bounds.y,
+    fullscreen: true,
+    frame: false,
+    webPreferences: {
+      preload: BANNER_PRELOAD_WEBPACK_ENTRY,
+    },
+    title: 'Joyride Banner 1',
+    show: true,
+  });
+  bannerWindow1.loadURL(BANNER_WEBPACK_ENTRY + '?banner=1');
+  bannerWindow1.setMenu(null);
+  if (!app.isPackaged) bannerWindow1.webContents.openDevTools({ mode: 'detach' });
+
+  if (settings.banner2Enabled) {
+    const banner2Bounds = getDisplayBounds(settings.banner2Display);
+    console.log('Creating Banner 2 with bounds:', banner2Bounds);
+    bannerWindow2 = new BrowserWindow({
+      width: banner2Bounds.width,
+      height: banner2Bounds.height,
+      x: banner2Bounds.x,
+      y: banner2Bounds.y,
+      fullscreen: true,
+      frame: false,
+      webPreferences: {
+        preload: BANNER_PRELOAD_WEBPACK_ENTRY,
+      },
+      title: 'Joyride Banner 2',
+      show: true,
+    });
+    bannerWindow2.loadURL(BANNER_WEBPACK_ENTRY + '?banner=2');
+    bannerWindow2.setMenu(null);
+    if (!app.isPackaged) bannerWindow2.webContents.openDevTools({ mode: 'detach' });
+  } else {
+    console.log('Banner 2 is disabled, not creating window');
+    bannerWindow2 = null;
+  }
+
+  // Restart slideshow with new configuration
+  setTimeout(() => {
+    startSlideshow();
+  }, 1000);
+
+  return true;
 });
 
 // Data source IPC handlers
@@ -138,7 +293,7 @@ ipcMain.handle('import-images', async () => {
   if (newImages && newImages.length > 0) {
     // Notify banner windows that the slides have changed and restart the slideshow
     if (bannerWindow1) bannerWindow1.webContents.send('slideshow-updated');
-    if (bannerWindow2) bannerWindow2.webContents.send('slideshow-updated');
+    if (bannerWindow2 && currentSettings.banner2Enabled) bannerWindow2.webContents.send('slideshow-updated');
     startSlideshow();
   }
   return newImages; // Return only the newly added images
@@ -152,7 +307,7 @@ ipcMain.handle('clear-slideshow-cache', async () => {
   mediaManager.clearSlideshowCache();
   // Notify banners that the slideshow is now empty
   if (bannerWindow1) bannerWindow1.webContents.send('slideshow-updated');
-  if (bannerWindow2) bannerWindow2.webContents.send('slideshow-updated');
+  if (bannerWindow2 && currentSettings.banner2Enabled) bannerWindow2.webContents.send('slideshow-updated');
   stopSlideshow();
   currentSlideIndex = 0;
 });
@@ -162,7 +317,7 @@ ipcMain.on('toggle-banner-number', (event, { isVisible }) => {
   if (bannerWindow1 && !bannerWindow1.isDestroyed()) {
     bannerWindow1.webContents.send('set-banner-number-visibility', isVisible);
   }
-  if (bannerWindow2 && !bannerWindow2.isDestroyed()) {
+  if (bannerWindow2 && !bannerWindow2.isDestroyed() && currentSettings.banner2Enabled) {
     bannerWindow2.webContents.send('set-banner-number-visibility', isVisible);
   }
 });

@@ -35,6 +35,10 @@ contextBridge.exposeInMainWorld('electronAPI', {
       'get-current-slide-index',
       'banner-display', // Moving these to invoke for better flow control
       'banner-clear',
+      'get-settings',
+      'save-settings',
+      'apply-display-settings',
+      'get-available-displays',
     ];
     if (validChannels.includes(channel)) {
       return ipcRenderer.invoke(channel, ...args);
