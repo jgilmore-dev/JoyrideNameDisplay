@@ -28,7 +28,7 @@ async function generatePngVariants(src, sizes, prefix) {
     const outPath = path.join(TMP_DIR, `${prefix}-${size}.png`);
     await sharp(src).resize(size, size).png().toFile(outPath);
     outPngs.push(outPath);
-    console.log(`✅ Resized ${src} to ${size}x${size}`);
+    console.log(`> Resized ${src} to ${size}x${size}`);
   }
   return outPngs;
 }
@@ -37,20 +37,20 @@ async function generateIco(pngs, outPath) {
   try {
     const buf = await pngToIco(pngs);
     fs.writeFileSync(outPath, buf);
-    console.log(`✅ Created ICO: ${outPath}`);
+    console.log(`> Created ICO: ${outPath}`);
   } catch (error) {
-    console.error(`❌ Failed to create ICO: ${outPath}`, error);
+    console.error(`> Failed to create ICO: ${outPath}`, error);
     throw error;
   }
 }
 
 async function generateIcns(pngs, outPath) {
   if (os.platform() !== 'darwin') {
-    console.log('📋 Skipping ICNS generation on non-Mac platform.');
+    console.log('> Skipping ICNS generation on non-Mac platform.');
     return;
   }
 
-  console.log('🍎 Generating ICNS for macOS...');
+  console.log('> Generating ICNS for macOS...');
   const iconsetDir = path.join(TMP_DIR, 'app.iconset');
   if (fs.existsSync(iconsetDir)) {
     fs.rmSync(iconsetDir, { recursive: true, force: true });
@@ -77,23 +77,23 @@ async function generateIcns(pngs, outPath) {
     }
   }
 
-  console.log(`📁 Created iconset at: ${iconsetDir}`);
+  console.log(`> Created iconset at: ${iconsetDir}`);
 
   try {
     execSync(`iconutil --convert icns --output "${outPath}" "${iconsetDir}"`);
-    console.log(`✅ Created ICNS: ${outPath}`);
+    console.log(`> Created ICNS: ${outPath}`);
   } catch (error) {
-    console.error('❌ Error using iconutil:', error.message);
-    console.error('   Stderr:', error.stderr ? error.stderr.toString() : 'N/A');
-    console.error('   Stdout:', error.stdout ? error.stdout.toString() : 'N/A');
+    console.error('> Error using iconutil:', error.message);
+    console.error('  Stderr:', error.stderr ? error.stderr.toString() : 'N/A');
+    console.error('  Stdout:', error.stdout ? error.stdout.toString() : 'N/A');
     console.log('   Please ensure Xcode Command Line Tools are installed on your Mac.');
     throw error;
   }
 }
 
 async function main() {
-  console.log('🎨 Generating cross-platform icons...');
-  console.log(`🖥️  Platform: ${os.platform()}`);
+  console.log('Starting cross-platform icon generation...');
+  console.log(`Platform: ${os.platform()}`);
   
   setup();
 
@@ -109,15 +109,15 @@ async function main() {
   const largestFavicon = faviconPngs[faviconPngs.length - 1];
   fs.copyFileSync(SRC_APP_ICON, path.join(ICONS_DIR, 'app-icon.png'));
   fs.copyFileSync(largestFavicon, path.join(ICONS_DIR, 'favicon.png'));
-  console.log('✅ Copied PNGs for Linux/general use');
+  console.log('> Copied PNGs for Linux/general use');
   
   // No need to clean TMP_DIR, it's removed at the start of the script.
 
-  console.log('\n🎉 Icon generation complete!');
+  console.log('Icon generation complete!');
 }
 
 main().catch(err => {
-  console.error('\n❌ An error occurred during icon generation:');
+  console.error('An error occurred during icon generation:');
   console.error(err);
   process.exit(1);
 }); 
