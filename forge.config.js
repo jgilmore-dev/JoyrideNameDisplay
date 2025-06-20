@@ -3,24 +3,35 @@ const { FuseV1Options, FuseVersion } = require('@electron/fuses');
 const fs = require('fs');
 const path = require('path');
 
-// Determine icon path - use PNG as fallback if ICO doesn't exist
-const iconPath = fs.existsSync('./src/assets/icons/app-icon.ico') 
-  ? './src/assets/icons/app-icon.ico'
-  : './src/assets/icons/app-icon-512.png';
+// Determine icon paths for different platforms
+const getIconPath = (platform) => {
+  switch (platform) {
+    case 'win32':
+      return fs.existsSync('./src/assets/icons/app-icon.ico') 
+        ? './src/assets/icons/app-icon.ico'
+        : './src/assets/icons/app-icon-512.png';
+    case 'darwin':
+      return fs.existsSync('./src/assets/icons/app-icon.icns')
+        ? './src/assets/icons/app-icon.icns'
+        : './src/assets/icons/app-icon-512.png';
+    case 'linux':
+      return './src/assets/icons/app-icon-512.png';
+    default:
+      return './src/assets/icons/app-icon-512.png';
+  }
+};
 
 module.exports = {
   packagerConfig: {
     asar: true,
-    icon: iconPath, // Windows icon
-    // macOS icon (if needed later)
-    // icon: './src/assets/icons/app-icon.icns',
+    icon: getIconPath(process.platform),
   },
   rebuildConfig: {},
   makers: [
     {
       name: '@electron-forge/maker-squirrel',
       config: {
-        iconUrl: 'https://raw.githubusercontent.com/your-repo/joyride-name-display/main/src/assets/icons/app-icon.ico',
+        iconUrl: 'https://raw.githubusercontent.com/jgilmore-dev/JoyrideNameDisplay/main/src/assets/icons/app-icon.ico',
         setupIcon: './src/assets/icons/app-icon.ico',
         certificateFile: process.env.CODE_SIGNING_CERT_PATH,
         certificatePassword: process.env.CODE_SIGNING_CERT_PASSWORD,
@@ -29,6 +40,16 @@ module.exports = {
     {
       name: '@electron-forge/maker-zip',
       platforms: ['darwin'],
+      config: {
+        icon: getIconPath('darwin'),
+      },
+    },
+    {
+      name: '@electron-forge/maker-dmg',
+      config: {
+        icon: getIconPath('darwin'),
+        format: 'ULFO',
+      },
     },
     {
       name: '@electron-forge/maker-deb',
