@@ -1,8 +1,8 @@
-# Joyride Event Display - User Guide
+# JoyRide Event Display – User Guide
 
-## Overview
+## Welcome to JoyRide!
 
-The Joyride Event Display Application is designed to manage and display participant information for special needs joyride events. It provides a user-friendly interface for importing member data, managing displays, and creating engaging visual presentations.
+Thank you for being part of the JoyRide family—a car club created just for kids with special needs and their families. Our mission is simple: Kids. Cars. Smiles. This guide will help you use the JoyRide Event Display to make every participant feel like a VIP and every event a celebration.
 
 ## Getting Started
 
@@ -13,21 +13,21 @@ The Joyride Event Display Application is designed to manage and display particip
 
 ### First Launch
 When you first open the application, you'll see the Control Panel with options to:
-- Import member data from a CSV file
+- Import your JoyRide member list from a CSV file
 - Add members manually
 - Configure display settings
-- Start the banner displays
+- Start the banner displays and let the smiles begin
 
-## Importing Member Data
+## Bringing Your Members to Life
 
-### CSV Format Requirements
-Your CSV file must have the following columns:
+### Preparing Your Member List (CSV Format)
+Your CSV file should have these columns:
 - **LastName** (required): The family's last name
 - **Member1** (required): First member's name
 - **Member2** (optional): Second member's name (for families with multiple members)
 - **Member3** (optional): Third member's name (for families with multiple members)
 
-### Sample CSV Structure
+#### Example CSV
 ```csv
 LastName,Member1,Member2,Member3
 Smith,Emma,,
@@ -36,67 +36,66 @@ Williams,David,,
 Brown,Sarah,Alex,Emma
 ```
 
-### Multi-Member Families
 - Leave empty cells for families with fewer than 3 members
-- Each member will be displayed individually in the banner
-- Members from the same family will be grouped together in the display
+- Each member will be celebrated individually in the banner
+- Members from the same family are grouped together for a sense of community
 
-### Import Steps
+### Importing Your List
 1. Click "Import CSV" in the Control Panel
 2. Select your CSV file
-3. The application will automatically parse and display the imported data
-4. Review the imported members in the member list
-5. Make any necessary edits using the "Edit" button
+3. The application will automatically display your JoyRide members
+4. Review the list—every name is important!
+5. Make edits as needed using the "Edit" button
 
 ## Adding Members Manually
 
 1. Click "Add Member" in the Control Panel
-2. Fill in the member information:
-   - **Name**: Required field
+2. Fill in the member's information:
+   - **Name**: Required
    - **Age**: Optional
    - **Special Needs**: Optional
    - **Notes**: Optional
-3. Click "Save" to add the member to the list
+3. Click "Save" to add the member to your JoyRide family
 
-## Managing Members
+## Managing Your JoyRide Members
 
 ### Editing Members
 1. Select a member from the list
-2. Click "Edit" to modify their information
-3. Make your changes and click "Save"
+2. Click "Edit" to update their information
+3. Save your changes
 
 ### Removing Members
 1. Select a member from the list
-2. Click "Remove" to delete them from the list
+2. Click "Remove" to take them off the list
 
 ### Reordering Members
 - Use the up/down arrows to change the display order
-- Members at the top of the list will appear first in the banner displays
+- Members at the top of the list will appear first in the banners
 
-## Display Configuration
+## Setting Up Your Event Displays
 
 ### Banner Settings
 - **Banner 1**: Primary display (always active)
-- **Banner 2**: Secondary display (can be disabled)
+- **Banner 2**: Secondary display (optional)
 - **Display Selection**: Choose which monitor each banner appears on
 
 ### Display Options
-- **Enable/Disable Banner 2**: Toggle the second banner on or off
-- **Display Selection**: Select which monitor to use for each banner
-- **Auto-detect Displays**: Automatically detect available monitors
+- Enable or disable Banner 2 as needed
+- Select which monitor to use for each banner
+- Auto-detect available displays for easy setup
 
-## Using the Banner Displays
+## Sharing the Joy: Using the Banners
 
 ### Starting the Displays
 1. Configure your display settings
-2. Click "Start Banner 1" to launch the primary display
+2. Click "Start Banner 1" to launch the main display
 3. Click "Start Banner 2" to launch the secondary display (if enabled)
 
 ### Display Features
-- **Automatic Cycling**: Names cycle through automatically
-- **Manual Control**: Use the control panel to advance names manually
-- **Slideshow Mode**: Continuous automatic cycling
-- **Pause/Resume**: Control the display timing
+- **Automatic Cycling**: Names cycle through automatically, so every child gets their moment
+- **Manual Control**: Use the control panel to advance names at your own pace
+- **Slideshow Mode**: Let the celebration roll with continuous cycling
+- **Pause/Resume**: Pause to savor a special moment, then resume the fun
 
 ### Display Controls
 - **Next**: Advance to the next name
@@ -105,50 +104,50 @@ Brown,Sarah,Alex,Emma
 - **Pause**: Stop automatic cycling
 - **Reset**: Return to the first name
 
-## Tips for Best Results
+## Tips for a Joyful Event
 
-### CSV Preparation
-- Use a spreadsheet program like Excel or Google Sheets
+### Preparing Your CSV
+- Use Excel or Google Sheets for easy editing
 - Save as CSV format
-- Ensure the first row contains column headers
-- Check for any special characters that might cause issues
+- Make sure the first row contains column headers
+- Double-check for special characters or formatting issues
 
 ### Display Setup
 - Test your display configuration before the event
-- Ensure both monitors are connected and recognized
-- Position the banner windows where they're easily visible
-- Consider the viewing distance when setting up displays
+- Ensure all monitors are connected and recognized
+- Position banners where everyone can see them
+- Consider the viewing distance for maximum impact
 
 ### Event Management
-- Import your member list well before the event
-- Test the display functionality with your actual data
-- Have a backup plan in case of technical issues
-- Consider printing a backup list of names
+- Import your member list ahead of time
+- Test the display with your actual data
+- Have a backup plan for technical issues
+- Consider printing a backup list of names—just in case
 
-## Troubleshooting
+## Troubleshooting & Support
 
 ### Common Issues
 
-**Display not showing on correct monitor:**
+**Display not showing on the correct monitor:**
 - Check your display settings in the Control Panel
 - Ensure the target monitor is connected and active
 - Try restarting the application
 
 **CSV import errors:**
-- Verify your CSV format matches the required structure
+- Make sure your CSV matches the required format
 - Check for special characters or formatting issues
-- Ensure the file is saved as CSV format
+- Ensure the file is saved as CSV
 
 **Application not responding:**
 - Close and restart the application
 - Check if other applications are using the same ports
-- Ensure you have sufficient system resources
+- Ensure you have enough system resources
 
-### Getting Help
-If you encounter issues not covered in this guide:
+### Need Help?
+If you run into issues not covered here:
 1. Check the application logs for error messages
 2. Restart the application
-3. Contact technical support with specific error details
+3. Reach out to technical support with details—we're here to help!
 
 ## Keyboard Shortcuts
 
@@ -163,13 +162,13 @@ If you encounter issues not covered in this guide:
 ### Saving Your Work
 - Member data is automatically saved as you make changes
 - No manual save is required
-- Data persists between application sessions
+- Data persists between sessions
 
 ### Exporting Data
-- Currently, the application focuses on display functionality
+- The application focuses on display functionality
 - Keep your original CSV file as a backup
 - Consider taking screenshots of important displays
 
 ---
 
-*This guide covers the basic functionality of the Joyride Event Display Application. For technical support or feature requests, please contact the development team.* 
+Thank you for helping us make every JoyRide event special. Together, we create memories that last a lifetime. Kids. Cars. Smiles. 

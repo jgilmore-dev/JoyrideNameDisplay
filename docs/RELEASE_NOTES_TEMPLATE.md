@@ -1,5 +1,7 @@
 # Release Notes Template
 
+Welcome to another update from the JoyRide family! JoyRide is a car club created just for kids with special needs and their families. Our mission is simple: Kids. Cars. Smiles. Thank you for helping us make every event a celebration.
+
 ## Version X.X.X - [Release Date]
 
 ### 🎉 What's New
@@ -35,13 +37,13 @@
 ### Version 1.0.0 - Initial Release
 
 ### 🎉 What's New
-- Initial release of Joyride Event Display Application
+- Initial release of JoyRide Event Display Application
 - CSV import functionality for participant data
 - Multi-screen display support with configurable monitors
 - Manual and automatic name cycling
 - Slideshow mode for continuous display
 - Member management (add, edit, remove, reorder)
-- Branded Joyride icons and interface
+- Branded JoyRide icons and interface
 
 ### 🔧 Technical Features
 - Electron-based desktop application
@@ -69,4 +71,8 @@
 - Special needs joyride events
 - Community gatherings
 - Fundraising events
-- Any event requiring participant name displays 
+- Any event where every name deserves to be celebrated
+
+---
+
+Thank you for being part of the JoyRide community. Together, we create memories that last a lifetime. Kids. Cars. Smiles. 
