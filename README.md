@@ -6,13 +6,11 @@ JoyRide is a car club exclusively for kids with special needs, and this desktop 
 
 *"People will forget what you said, people will forget what you did, but people will never forget how you made them feel." - Maya Angelou*
 
-## Quick Downloads
+## Quick Download
 
-- **[Download Latest Windows Installer](https://github.com/jgilmore-dev/JoyrideNameDisplay/releases/latest/download/JoyRide.Cars.Name.Display-x64.exe)**
-- **[Download Latest macOS App](https://github.com/jgilmore-dev/JoyrideNameDisplay/releases/latest/download/JoyRide-Cars-Name-Display.dmg)**
-- **[Download Latest Linux .deb Package](https://github.com/jgilmore-dev/JoyrideNameDisplay/releases/latest/download/joyridenamedisplay_1.3.0_amd64.deb)**
+**[Download Latest Version](https://github.com/jgilmore-dev/JoyrideNameDisplay/releases/latest)**
 
-*For other package types (.zip, .rpm), see the [full releases page](https://github.com/jgilmore-dev/JoyrideNameDisplay/releases).*
+Visit the link above to download the latest installer for your operating system (Windows, macOS, or Linux).
 
 ## Creating VIP Experiences
 
