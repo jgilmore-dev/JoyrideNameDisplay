@@ -1,7 +1,7 @@
 import React from 'react';
 import { formatFirstNames } from './utils.js';
 
-const MemberList = ({ members, onSelectMember, onEditMember, banner2Enabled = true }) => (
+const MemberList = ({ members, onSelectMember, onEditMember, enabledBanners = [] }) => (
   <div className="list-container">
     <h2>Member List</h2>
     <div className="table-wrapper">
@@ -19,10 +19,11 @@ const MemberList = ({ members, onSelectMember, onEditMember, banner2Enabled = tr
               <td>{member.LastName}</td>
               <td>{formatFirstNames(member)}</td>
               <td className="actions-cell">
-                <button onClick={() => onSelectMember(member, 1)}>To Banner 1</button>
-                {banner2Enabled && (
-                  <button onClick={() => onSelectMember(member, 2)}>To Banner 2</button>
-                )}
+                {enabledBanners.map(bannerId => (
+                  <button key={bannerId} onClick={() => onSelectMember(member, bannerId)}>
+                    To Banner {bannerId}
+                  </button>
+                ))}
                 <button onClick={() => onEditMember(member)}>Edit</button>
               </td>
             </tr>

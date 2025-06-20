@@ -40,17 +40,26 @@ This application ensures every child gets the red carpet treatment they deserve,
 
 ## System Requirements
 
-- **Windows 10/11** (64-bit)
+- **Windows 10/11** (64-bit) - Primary platform
+- **Linux** (64-bit) - Experimental support
 - **4GB RAM** minimum
 - **100MB** disk space
 - **Multiple monitors** (recommended for dual banners)
 
 ## Installation
 
+### Windows
 1. Download the installer from our [Releases page](https://github.com/jgilmore-dev/JoyrideNameDisplay/releases)
 2. Run the installer and follow the setup wizard
 3. Launch from your Start Menu or Desktop
 4. Import your member data and start creating joy
+
+### Linux
+1. Download the Linux package from our [Releases page](https://github.com/jgilmore-dev/JoyrideNameDisplay/releases)
+2. Extract the package and run the executable
+3. Import your member data and start creating joy
+
+*Note: Linux support is experimental. Please report any issues you encounter.*
 
 ## Member Data Format
 
@@ -90,6 +99,18 @@ Every line of code in this application was written with our JoyRide members in m
 ## License
 
 MIT License - Built with love by the JoyRide community, for the JoyRide community.
+
+## Contributing
+
+We welcome contributions! Whether you're a developer, tester, or just someone who wants to help, there are many ways to contribute:
+
+- **Report bugs** or suggest improvements
+- **Test the application** and provide feedback
+- **Help with Linux support** (we're looking for Linux contributors!)
+- **Improve documentation** or create guides
+- **Share the project** with others who might benefit
+
+See our [Contributing Guide](CONTRIBUTING.md) for more details on how to get involved.
 
 ---
 

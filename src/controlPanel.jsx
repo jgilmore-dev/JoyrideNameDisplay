@@ -1,8 +1,25 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import MemberList from './memberList.jsx';
-import { formatFirstNames } from './utils.js';
+import { formatFirstNames, debounce } from './utils.js';
 import AddMemberForm from './addMemberForm.jsx';
 import EditMemberForm from './editMemberForm.jsx';
+
+// Debounce hook for search optimization
+const useDebounce = (value, delay) => {
+  const [debouncedValue, setDebouncedValue] = useState(value);
+
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedValue(value);
+    }, delay);
+
+    return () => {
+      clearTimeout(handler);
+    };
+  }, [value, delay]);
+
+  return debouncedValue;
+};
 
 const ControlPanel = () => {
   const [members, setMembers] = useState([]);
@@ -13,20 +30,48 @@ const ControlPanel = () => {
   const [editingMember, setEditingMember] = useState(null);
   const [showBannerNumbers, setShowBannerNumbers] = useState(true);
   const [settings, setSettings] = useState({
-    banner1Enabled: false,
-    banner2Enabled: false,
-    banner1Display: 0,
-    banner2Display: 1,
+    banners: [
+      { id: 1, enabled: false, display: 0 },
+      { id: 2, enabled: false, display: 1 }
+    ],
     fontColor: '#8B9091' // Always use this as the default
   });
   const [showSettings, setShowSettings] = useState(false);
   const [availableDisplays, setAvailableDisplays] = useState([]);
   const [colorInputValue, setColorInputValue] = useState('#8B9091'); // Always use this as the default
   const [settingsCollapsed, setSettingsCollapsed] = useState(false);
-  const [dataCollapsed, setDataCollapsed] = useState(false);
   const [mediaCollapsed, setMediaCollapsed] = useState(false);
   const [displayCollapsed, setDisplayCollapsed] = useState(false);
   const [memberCollapsed, setMemberCollapsed] = useState(false);
+
+  // Debounce search term to improve performance
+  const debouncedSearchTerm = useDebounce(searchTerm, 300);
+
+  // Memoized search handler to prevent unnecessary re-renders
+  const handleSearchChange = useCallback((e) => {
+    setSearchTerm(e.target.value);
+  }, []);
+
+  // Memoized member filtering for better performance
+  const { membersToDisplay, recentlyDisplayedMembers } = useMemo(() => {
+    const searchLower = debouncedSearchTerm.toLowerCase();
+    
+    const membersToDisplay = members.filter(member => {
+      const isNotDisplayed = !member.displayed;
+      const searchString = `${member.Member1 || ''} ${member.Member2 || ''} ${member.Member3 || ''} ${member.Member4 || ''} ${member.LastName}`.toLowerCase();
+      const matchesSearch = searchString.includes(searchLower);
+      return isNotDisplayed && matchesSearch;
+    });
+
+    const recentlyDisplayedMembers = members.filter(member => {
+      const isDisplayed = member.displayed;
+      const searchString = `${member.Member1 || ''} ${member.Member2 || ''} ${member.Member3 || ''} ${member.Member4 || ''} ${member.LastName}`.toLowerCase();
+      const matchesSearch = searchString.includes(searchLower);
+      return isDisplayed && matchesSearch;
+    });
+
+    return { membersToDisplay, recentlyDisplayedMembers };
+  }, [members, debouncedSearchTerm]);
 
   const fetchMembers = async () => {
     const memberList = await window.electronAPI.invoke('get-members');
@@ -137,7 +182,6 @@ const ControlPanel = () => {
   const handleSettingsChange = async (newSettings) => {
     try {
       setSettings(newSettings);
-      await window.electronAPI.invoke('save-settings', newSettings);
       await window.electronAPI.invoke('apply-display-settings', newSettings);
       
       // Send font color update to banner windows if it changed
@@ -151,17 +195,27 @@ const ControlPanel = () => {
     }
   };
 
-  const membersToDisplay = members.filter(member => {
-    const isNotDisplayed = !member.displayed;
-    const matchesSearch = `${member.Member1 || ''} ${member.Member2 || ''} ${member.Member3 || ''} ${member.Member4 || ''} ${member.LastName}`.toLowerCase().includes(searchTerm.toLowerCase());
-    return isNotDisplayed && matchesSearch;
-  });
+  // Helper function to update a specific banner's settings
+  const updateBannerSetting = (bannerId, field, value) => {
+    const newSettings = {
+      ...settings,
+      banners: settings.banners.map(banner => 
+        banner.id === bannerId ? { ...banner, [field]: value } : banner
+      )
+    };
+    handleSettingsChange(newSettings);
+  };
 
-  const recentlyDisplayedMembers = members.filter(member => {
-    const isDisplayed = member.displayed;
-    const matchesSearch = `${member.Member1 || ''} ${member.Member2 || ''} ${member.Member3 || ''} ${member.Member4 || ''} ${member.LastName}`.toLowerCase().includes(searchTerm.toLowerCase());
-    return isDisplayed && matchesSearch;
-  });
+  // Helper function to get banner setting
+  const getBannerSetting = (bannerId, field) => {
+    const banner = settings.banners.find(b => b.id === bannerId);
+    return banner ? banner[field] : null;
+  };
+
+  // Helper function to check if banner is enabled
+  const isBannerEnabled = (bannerId) => {
+    return getBannerSetting(bannerId, 'enabled') || false;
+  };
 
   return (
     <div className="container">
@@ -182,60 +236,28 @@ const ControlPanel = () => {
           </div>
           {!settingsCollapsed && (
             <div className="settings-grid">
-              <div className="setting-item banner-setting-row">
-                <label>
-                  <input
-                    type="checkbox"
-                    checked={settings.banner1Enabled}
-                    onChange={e => handleSettingsChange({
-                      ...settings,
-                      banner1Enabled: e.target.checked
-                    })}
-                  />
-                  Enable Banner 1
-                </label>
-                <select
-                  value={settings.banner1Display}
-                  onChange={e => handleSettingsChange({
-                    ...settings,
-                    banner1Display: parseInt(e.target.value)
-                  })}
-                  disabled={!settings.banner1Enabled}
-                >
-                  {availableDisplays.map(display => (
-                    <option key={display.index} value={display.index}>
-                      {display.name} ({display.bounds.width}x{display.bounds.height})
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div className="setting-item banner-setting-row">
-                <label>
-                  <input
-                    type="checkbox"
-                    checked={settings.banner2Enabled}
-                    onChange={e => handleSettingsChange({
-                      ...settings,
-                      banner2Enabled: e.target.checked
-                    })}
-                  />
-                  Enable Banner 2
-                </label>
-                <select
-                  value={settings.banner2Display}
-                  onChange={e => handleSettingsChange({
-                    ...settings,
-                    banner2Display: parseInt(e.target.value)
-                  })}
-                  disabled={!settings.banner2Enabled}
-                >
-                  {availableDisplays.map(display => (
-                    <option key={display.index} value={display.index}>
-                      {display.name} ({display.bounds.width}x{display.bounds.height})
-                    </option>
-                  ))}
-                </select>
-              </div>
+              {settings.banners.map(banner => (
+                <div key={banner.id} className="setting-item banner-setting-row">
+                  <label>
+                    <input
+                      type="checkbox"
+                      checked={banner.enabled}
+                      onChange={e => updateBannerSetting(banner.id, 'enabled', e.target.checked)}
+                    />
+                    Enable Banner {banner.id}
+                  </label>
+                  <select
+                    value={banner.display}
+                    onChange={e => updateBannerSetting(banner.id, 'display', parseInt(e.target.value))}
+                  >
+                    {availableDisplays.map(display => (
+                      <option key={display.index} value={display.index}>
+                        {display.name} ({display.bounds.width}x{display.bounds.height})
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              ))}
               <div className="setting-item">
                 <label>Font Color:</label>
                 <div className="color-picker-container">
@@ -281,6 +303,21 @@ const ControlPanel = () => {
                     placeholder="#8B9091"
                     className="color-input"
                   />
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const defaultColor = '#8B9091';
+                      setColorInputValue(defaultColor);
+                      handleSettingsChange({
+                        ...settings,
+                        fontColor: defaultColor
+                      });
+                    }}
+                    className="reset-color-button"
+                    title="Reset to default color"
+                  >
+                    🔄
+                  </button>
                 </div>
               </div>
             </div>
@@ -288,12 +325,40 @@ const ControlPanel = () => {
         </div>
       )}
 
-      <div className="data-section">
-        <div className="section-header" onClick={() => setDataCollapsed(!dataCollapsed)}>
-          <span>{dataCollapsed ? '►' : '▼'}</span> <h3>Data Management</h3>
+      <div className="display-section">
+        <div className="section-header" onClick={() => setDisplayCollapsed(!displayCollapsed)}>
+          <span>{displayCollapsed ? '►' : '▼'}</span> <h3>Display Controls</h3>
         </div>
-        {!dataCollapsed && (
+        {!displayCollapsed && (
           <div>
+            <div className="button-group">
+              {settings.banners.map(banner => (
+                <button 
+                  key={banner.id}
+                  onClick={() => handleClearBanner(banner.id)} 
+                  className="display-button"
+                >
+                  🖥️ Clear Banner {banner.id}
+                </button>
+              ))}
+            </div>
+            <div className="display-options">
+              <label>
+                <input type="checkbox" checked={showBannerNumbers} onChange={toggleBannerNumberVisibility} />
+                Show Banner Numbers
+              </label>
+            </div>
+          </div>
+        )}
+      </div>
+
+      <div className="member-section">
+        <div className="section-header" onClick={() => setMemberCollapsed(!memberCollapsed)}>
+          <span>{memberCollapsed ? '►' : '▼'}</span> <h3>Member Management</h3>
+        </div>
+        {!memberCollapsed && (
+          <div>
+            {/* Data Management Controls */}
             <div className="button-group">
               <button onClick={handleLoadCsv} className="primary-button">
                 📁 Load Member CSV
@@ -303,13 +368,49 @@ const ControlPanel = () => {
               </button>
             </div>
             {showAddForm && <AddMemberForm onAddMember={handleAddMember} onCancel={() => setShowAddForm(false)} />}
+            
+            {/* Member List Controls */}
+            {members.length > 0 && (
+              <>
+                <div className="search-container">
+                  <input 
+                    type="text" 
+                    placeholder="Search names..." 
+                    value={searchTerm}
+                    onChange={handleSearchChange} 
+                  />
+                  <label>
+                    <input 
+                      type="checkbox" 
+                      checked={showDisplayed} 
+                      onChange={(e) => setShowDisplayed(e.target.checked)} 
+                    />
+                    Show Recently Displayed
+                  </label>
+                </div>
+                <MemberList 
+                  members={showDisplayed ? recentlyDisplayedMembers : membersToDisplay} 
+                  onSelectMember={handleSelectMember} 
+                  onEditMember={handleEditMember}
+                  enabledBanners={settings.banners.filter(b => b.enabled).map(b => b.id)}
+                />
+                {editingMember && <EditMemberForm member={editingMember} onUpdateMember={handleUpdateMember} onCancel={() => setEditingMember(null)} />}
+              </>
+            )}
+            
+            {/* No Members Message */}
+            {members.length === 0 && (
+              <div className="info-section">
+                <p className="info-text">No members loaded. Click "Load Member CSV" to begin.</p>
+              </div>
+            )}
           </div>
         )}
       </div>
 
       <div className="media-section">
         <div className="section-header" onClick={() => setMediaCollapsed(!mediaCollapsed)}>
-          <span>{mediaCollapsed ? '►' : '▼'}</span> <h3>Slideshow Management</h3>
+          <span>{mediaCollapsed ? '►' : '▼'}</span> <h3>Slideshow Setup</h3>
         </div>
         {!mediaCollapsed && (
           <div>
@@ -325,72 +426,7 @@ const ControlPanel = () => {
         )}
       </div>
 
-      <div className="display-section">
-        <div className="section-header" onClick={() => setDisplayCollapsed(!displayCollapsed)}>
-          <span>{displayCollapsed ? '►' : '▼'}</span> <h3>Display Controls</h3>
-        </div>
-        {!displayCollapsed && (
-          <div>
-            <div className="button-group">
-              <button onClick={() => handleClearBanner(1)} className="display-button">
-                🖥️ Clear Banner 1
-              </button>
-              {settings.banner2Enabled && (
-                <button onClick={() => handleClearBanner(2)} className="display-button">
-                  🖥️ Clear Banner 2
-                </button>
-              )}
-            </div>
-            <div className="display-options">
-              <label>
-                <input type="checkbox" checked={showBannerNumbers} onChange={toggleBannerNumberVisibility} />
-                Show Banner Numbers
-              </label>
-            </div>
-          </div>
-        )}
-      </div>
-
       {error && <p className="error-text">{error}</p>}
-
-      {members.length > 0 ? (
-        <div className="member-section">
-          <div className="section-header" onClick={() => setMemberCollapsed(!memberCollapsed)}>
-            <span>{memberCollapsed ? '►' : '▼'}</span> <h3>Member Management</h3>
-          </div>
-          {!memberCollapsed && (
-            <div>
-              <div className="search-container">
-                <input 
-                  type="text" 
-                  placeholder="Search names..." 
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)} 
-                />
-                <label>
-                  <input 
-                    type="checkbox" 
-                    checked={showDisplayed} 
-                    onChange={(e) => setShowDisplayed(e.target.checked)} 
-                  />
-                  Show Recently Displayed
-                </label>
-              </div>
-              <MemberList 
-                members={showDisplayed ? recentlyDisplayedMembers : membersToDisplay} 
-                onSelectMember={handleSelectMember} 
-                onEditMember={handleEditMember}
-                banner2Enabled={settings.banner2Enabled}
-              />
-              {editingMember && <EditMemberForm member={editingMember} onUpdateMember={handleUpdateMember} onCancel={() => setEditingMember(null)} />}
-            </div>
-          )}
-        </div>
-      ) : (
-        <div className="info-section">
-          <p className="info-text">No members loaded. Click "Load Member CSV" to begin.</p>
-        </div>
-      )}
     </div>
   );
 };

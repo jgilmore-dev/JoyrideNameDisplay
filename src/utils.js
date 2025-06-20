@@ -21,4 +21,41 @@ export function formatFirstNames(member) {
   // For 3 or more names, use the Oxford comma.
   const last = names.pop();
   return `${names.join(', ')}, and ${last}`;
+}
+
+/**
+ * Debounce utility function for performance optimization
+ * @param {Function} func - The function to debounce
+ * @param {number} wait - The delay in milliseconds
+ * @returns {Function} The debounced function
+ */
+export function debounce(func, wait) {
+  let timeout;
+  return function executedFunction(...args) {
+    const later = () => {
+      clearTimeout(timeout);
+      func(...args);
+    };
+    clearTimeout(timeout);
+    timeout = setTimeout(later, wait);
+  };
+}
+
+/**
+ * Throttle utility function for performance optimization
+ * @param {Function} func - The function to throttle
+ * @param {number} limit - The time limit in milliseconds
+ * @returns {Function} The throttled function
+ */
+export function throttle(func, limit) {
+  let inThrottle;
+  return function() {
+    const args = arguments;
+    const context = this;
+    if (!inThrottle) {
+      func.apply(context, args);
+      inThrottle = true;
+      setTimeout(() => inThrottle = false, limit);
+    }
+  };
 } 

@@ -1,9 +1,10 @@
 const { app, dialog } = require('electron');
 const path = require('node:path');
 const fs = require('fs');
+const configManager = require('./config/configManager');
 
 // A persistent directory to store slideshow images
-const mediaDir = path.join(app.getPath('userData'), 'slideshow_media');
+const mediaDir = path.join(app.getPath('userData'), configManager.getPaths().mediaDir);
 if (!fs.existsSync(mediaDir)) {
   fs.mkdirSync(mediaDir, { recursive: true });
 }
@@ -34,11 +35,14 @@ function getSlideshowImages() {
  */
 async function importSlideshowImages(mainWindow) {
   try {
+    const slideshowConfig = configManager.getSlideshowConfig();
+    const errors = configManager.getErrors();
+    
     const { canceled, filePaths } = await dialog.showOpenDialog(mainWindow, {
       title: 'Import Slideshow Images',
       buttonLabel: 'Import',
       properties: ['openFile', 'multiSelections'],
-      filters: [{ name: 'Images', extensions: ['jpg', 'jpeg', 'png', 'gif'] }],
+      filters: [{ name: 'Images', extensions: slideshowConfig.supportedFormats }],
     });
 
     if (canceled || !filePaths || filePaths.length === 0) {
@@ -62,7 +66,7 @@ async function importSlideshowImages(mainWindow) {
     
     return newImagePaths; // Return only the paths of newly added images
   } catch (error) {
-    console.error('Error importing slideshow images:', error);
+    console.error(configManager.getErrors().imageImportError, error);
     return []; // Return empty array on error
   }
 }

@@ -29,8 +29,32 @@
 import './index.css';
 import React from 'react';
 import { createRoot } from 'react-dom/client';
-import App from './App.jsx';
+import Banner from './banner.jsx';
+import ControlPanel from './controlPanel.jsx';
+
+// Determine the mode based on URL parameters
+function getRenderMode() {
+  const params = new URLSearchParams(window.location.search);
+  return params.has('banner') ? 'banner' : 'control-panel';
+}
+
+// Get the banner number if in banner mode
+function getBannerNumber() {
+  const params = new URLSearchParams(window.location.search);
+  return parseInt(params.get('banner') || '1', 10);
+}
 
 const container = document.getElementById('root');
 const root = createRoot(container);
-root.render(<App />);
+
+// Render the appropriate component based on mode
+const mode = getRenderMode();
+
+if (mode === 'banner') {
+  const bannerNumber = getBannerNumber();
+  console.log(`Rendering Banner ${bannerNumber}`);
+  root.render(<Banner />);
+} else {
+  console.log('Rendering Control Panel');
+  root.render(<ControlPanel />);
+}

@@ -1,6 +1,7 @@
 const { dialog } = require('electron');
 const fs = require('fs');
 const Papa = require('papaparse');
+const configManager = require('./config/configManager');
 
 let members = []; // In-memory data store
 
@@ -9,13 +10,16 @@ let members = []; // In-memory data store
  * @returns {Promise<Object>}
  */
 async function loadDataFromCsv() {
+  const dataConfig = configManager.getDataConfig();
+  const errors = configManager.getErrors();
+  
   const { canceled, filePaths } = await dialog.showOpenDialog({
     properties: ['openFile'],
-    filters: [{ name: 'CSV', extensions: ['csv'] }],
+    filters: [{ name: 'CSV', extensions: dataConfig.supportedCsvFormats }],
   });
 
   if (canceled || filePaths.length === 0) {
-    return { error: 'File selection was canceled.' };
+    return { error: errors.fileSelectionCanceled };
   }
 
   const filePath = filePaths[0];
@@ -27,11 +31,16 @@ async function loadDataFromCsv() {
       skipEmptyLines: true,
       transformHeader: header => header.trim(),
       complete: (results) => {
-        members = results.data.map((m, index) => ({ ...m, id: `csv-${index}-${Date.now()}`, displayed: false }));
+        const idPrefix = configManager.getDataConfig().idPrefixes.csv;
+        members = results.data.map((m, index) => ({ 
+          ...m, 
+          id: `${idPrefix}-${index}-${Date.now()}`, 
+          displayed: false 
+        }));
         resolve({ data: members });
       },
       error: (error) => {
-        resolve({ error: error.message });
+        resolve({ error: `${errors.csvParseError} ${error.message}` });
       },
     });
   });
@@ -51,7 +60,8 @@ function getMembers() {
  * @returns {Array} The updated members list.
  */
 function addMember(newMember) {
-  const memberWithState = { ...newMember, id: `manual-${Date.now()}`, displayed: false };
+  const idPrefix = configManager.getDataConfig().idPrefixes.manual;
+  const memberWithState = { ...newMember, id: `${idPrefix}-${Date.now()}`, displayed: false };
   members = [memberWithState, ...members];
   return members;
 }
@@ -62,6 +72,11 @@ function addMember(newMember) {
  * @returns {Array} The updated members list.
  */
 function updateMember(updatedMember) {
+  const existingMember = members.find(m => m.id === updatedMember.id);
+  if (!existingMember) {
+    throw new Error(configManager.getErrors().memberNotFound);
+  }
+  
   members = members.map(m => (m.id === updatedMember.id ? updatedMember : m));
   return members;
 }
@@ -72,6 +87,11 @@ function updateMember(updatedMember) {
  * @returns {Array} The updated members list.
  */
 function markAsDisplayed(memberId) {
+  const existingMember = members.find(m => m.id === memberId);
+  if (!existingMember) {
+    throw new Error(configManager.getErrors().memberNotFound);
+  }
+  
   members = members.map(m => (m.id === memberId ? { ...m, displayed: true } : m));
   return members;
 }

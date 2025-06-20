@@ -3,6 +3,9 @@ const path = require('node:path');
 const fs = require('fs');
 const dataSource = require('./dataSource');
 const mediaManager = require('./mediaManager');
+const BannerManager = require('./bannerManager');
+const configManager = require('./config/configManager');
+const OfflineUpdater = require('./updater');
 
 // Handle creating/removing shortcuts on Windows when installing/uninstalling.
 if (require('electron-squirrel-startup')) {
@@ -10,70 +13,42 @@ if (require('electron-squirrel-startup')) {
 }
 
 let controlPanelWindow;
-let bannerWindow1;
-let bannerWindow2;
-let currentSettings = {
-  banner2Enabled: false,
-  banner1Display: 0,
-  banner2Display: 1
-};
+const bannerManager = new BannerManager();
+let updater;
 
-// Load settings from file
-const loadSettings = () => {
-  try {
-    const settingsPath = path.join(app.getPath('userData'), 'settings.json');
-    if (fs.existsSync(settingsPath)) {
-      const settingsData = fs.readFileSync(settingsPath, 'utf8');
-      const loadedSettings = JSON.parse(settingsData);
-      currentSettings = { ...currentSettings, ...loadedSettings };
-      console.log('Loaded settings:', currentSettings);
-    } else {
-      console.log('No settings file found, using defaults:', currentSettings);
-    }
-  } catch (error) {
-    console.error('Error loading settings:', error);
+// Slideshow Conductor
+let slideshowInterval;
+let currentSlideIndex = 0;
+
+function startSlideshow() {
+  stopSlideshow(); // Stop any existing interval
+
+  const imageCount = mediaManager.getSlideshowImageCount();
+  if (imageCount === 0) return; // Don't start if no images
+
+  const slideshowConfig = configManager.getSlideshowConfig();
+  slideshowInterval = setInterval(() => {
+    currentSlideIndex = (currentSlideIndex + 1) % imageCount;
+    console.log(`[Main Process] Broadcasting set-slide, index: ${currentSlideIndex}`);
+    const channels = configManager.getIpcChannels();
+    bannerManager.broadcastToBanners(channels.setSlide, currentSlideIndex);
+  }, slideshowConfig.interval);
+}
+
+function stopSlideshow() {
+  if (slideshowInterval) {
+    clearInterval(slideshowInterval);
+    slideshowInterval = null;
   }
-};
-
-// Save settings to file
-const saveSettings = (settings) => {
-  try {
-    const settingsPath = path.join(app.getPath('userData'), 'settings.json');
-    fs.writeFileSync(settingsPath, JSON.stringify(settings, null, 2));
-    currentSettings = settings;
-  } catch (error) {
-    console.error('Error saving settings:', error);
-  }
-};
-
-// Get display bounds for a specific display index
-const getDisplayBounds = (displayIndex) => {
-  const displays = screen.getAllDisplays();
-  if (displayIndex >= 0 && displayIndex < displays.length) {
-    return displays[displayIndex].bounds;
-  }
-  // Fallback to primary display
-  return displays[0].bounds;
-};
-
-// Get available displays information
-const getAvailableDisplays = () => {
-  const displays = screen.getAllDisplays();
-  return displays.map((display, index) => ({
-    index,
-    bounds: display.bounds,
-    isPrimary: display.bounds.x === 0 && display.bounds.y === 0,
-    name: `Display ${index + 1}${display.bounds.x === 0 && display.bounds.y === 0 ? ' (Primary)' : ''}`
-  }));
-};
+}
 
 const createWindows = () => {
   // Load settings before creating windows
-  loadSettings();
-  console.log('Creating windows with settings:', currentSettings);
+  bannerManager.loadSettings();
+  console.log('Creating windows with settings:', bannerManager.getSettings());
 
   // Determine icon path - use PNG as fallback if ICO doesn't exist
-  const assetsDir = path.join(__dirname, 'assets/icons');
+  const assetsDir = path.join(__dirname, configManager.getPaths().iconsDir);
   let iconPath = null;
   
   // Check if assets directory exists first
@@ -90,13 +65,16 @@ const createWindows = () => {
   }
 
   // Control Panel Window
+  const windowConfig = configManager.getWindowConfig().controlPanel;
   const controlPanelConfig = {
-    width: 900,
-    height: 700,
+    width: windowConfig.width,
+    height: windowConfig.height,
+    minWidth: windowConfig.minWidth,
+    minHeight: windowConfig.minHeight,
     webPreferences: {
-      preload: CONTROL_PANEL_PRELOAD_WEBPACK_ENTRY,
+      preload: RENDERER_PRELOAD_WEBPACK_ENTRY,
     },
-    title: 'JoyRide Control Panel',
+    title: windowConfig.title,
   };
   
   // Only add icon if we have a valid path
@@ -105,243 +83,60 @@ const createWindows = () => {
   }
   
   controlPanelWindow = new BrowserWindow(controlPanelConfig);
-  controlPanelWindow.loadURL(CONTROL_PANEL_WEBPACK_ENTRY);
-  if (!app.isPackaged) controlPanelWindow.webContents.openDevTools({ mode: 'detach' });
-
-  // Banner 1 Window (only if enabled)
-  if (currentSettings.banner1Enabled) {
-    const banner1Bounds = getDisplayBounds(currentSettings.banner1Display);
-    console.log('Creating Banner 1 with bounds:', banner1Bounds);
-    const banner1Config = {
-      width: banner1Bounds.width,
-      height: banner1Bounds.height,
-      x: banner1Bounds.x,
-      y: banner1Bounds.y,
-      fullscreen: true,
-      frame: false,
-      webPreferences: {
-        preload: BANNER_PRELOAD_WEBPACK_ENTRY,
-      },
-      title: 'JoyRide Banner 1',
-      show: true,
-    };
-    if (iconPath && fs.existsSync(iconPath)) {
-      banner1Config.icon = iconPath;
-    }
-    bannerWindow1 = new BrowserWindow(banner1Config);
-    bannerWindow1.loadURL(BANNER_WEBPACK_ENTRY + '?banner=1');
-    bannerWindow1.setMenu(null);
-    if (!app.isPackaged) bannerWindow1.webContents.openDevTools({ mode: 'detach' });
-    setTimeout(() => {
-      if (bannerWindow1 && !bannerWindow1.isDestroyed()) {
-        bannerWindow1.webContents.send('set-font-color', currentSettings.fontColor);
-      }
-    }, 1000);
-  } else {
-    bannerWindow1 = null;
+  controlPanelWindow.loadURL(RENDERER_WEBPACK_ENTRY);
+  
+  const devConfig = configManager.getDevelopmentConfig();
+  if (!app.isPackaged && devConfig.devTools.openOnStart) {
+    controlPanelWindow.webContents.openDevTools({ mode: devConfig.devTools.mode });
   }
 
-  // Banner 2 Window (only if enabled)
-  if (currentSettings.banner2Enabled) {
-    const banner2Bounds = getDisplayBounds(currentSettings.banner2Display);
-    console.log('Creating Banner 2 with bounds:', banner2Bounds);
-    const banner2Config = {
-      width: banner2Bounds.width,
-      height: banner2Bounds.height,
-      x: banner2Bounds.x,
-      y: banner2Bounds.y,
-      fullscreen: true,
-      frame: false,
-      webPreferences: {
-        preload: BANNER_PRELOAD_WEBPACK_ENTRY,
-      },
-      title: 'JoyRide Banner 2',
-      show: true,
-    };
-    if (iconPath && fs.existsSync(iconPath)) {
-      banner2Config.icon = iconPath;
-    }
-    bannerWindow2 = new BrowserWindow(banner2Config);
-    bannerWindow2.loadURL(BANNER_WEBPACK_ENTRY + '?banner=2');
-    bannerWindow2.setMenu(null);
-    if (!app.isPackaged) bannerWindow2.webContents.openDevTools({ mode: 'detach' });
-    setTimeout(() => {
-      if (bannerWindow2 && !bannerWindow2.isDestroyed()) {
-        bannerWindow2.webContents.send('set-font-color', currentSettings.fontColor);
-      }
-    }, 1000);
-  } else {
-    bannerWindow2 = null;
-  }
+  // Create banner windows using BannerManager
+  bannerManager.createAllBanners();
+  
+  // Set callback for when all banner windows are ready
+  bannerManager.setOnAllWindowsReady(() => {
+    startSlideshow();
+  });
 };
 
-// Slideshow Conductor
-let slideshowInterval;
-let currentSlideIndex = 0;
-
-function startSlideshow() {
-  stopSlideshow(); // Stop any existing interval
-
-  const imageCount = mediaManager.getSlideshowImageCount();
-  if (imageCount === 0) return; // Don't start if no images
-
-  slideshowInterval = setInterval(() => {
-    currentSlideIndex = (currentSlideIndex + 1) % imageCount;
-    console.log(`[Main Process] Broadcasting set-slide, index: ${currentSlideIndex}`);
-    if (bannerWindow1 && !bannerWindow1.isDestroyed()) {
-      bannerWindow1.webContents.send('set-slide', currentSlideIndex);
-    }
-    if (bannerWindow2 && !bannerWindow2.isDestroyed()) {
-      bannerWindow2.webContents.send('set-slide', currentSlideIndex);
-    }
-  }, 20000); // 20 seconds
-}
-
-function stopSlideshow() {
-  if (slideshowInterval) {
-    clearInterval(slideshowInterval);
-    slideshowInterval = null;
-  }
-}
-
 // IPC Handlers
-ipcMain.handle('banner-display', (event, { banner, nameData }) => {
-  const targetWindow = banner === 1 ? bannerWindow1 : bannerWindow2;
-  if (targetWindow && !targetWindow.isDestroyed()) {
-    targetWindow.webContents.send('display-name', nameData);
-  }
+const channels = configManager.getIpcChannels();
+
+ipcMain.handle(channels.bannerDisplay, (event, { banner, nameData }) => {
+  bannerManager.sendToBanner(banner, channels.displayName, nameData);
 });
 
-ipcMain.handle('banner-clear', (event, { banner }) => {
-  const targetWindow = banner === 1 ? bannerWindow1 : bannerWindow2;
-  if (targetWindow && !targetWindow.isDestroyed()) {
-    targetWindow.webContents.send('clear-name');
-  }
+ipcMain.handle(channels.bannerClear, (event, { banner }) => {
+  bannerManager.sendToBanner(banner, channels.clearName);
 });
 
-let readyWindows = 0;
-ipcMain.on('renderer-ready', (event) => {
-  readyWindows++;
-  const expectedWindows = currentSettings.banner2Enabled ? 2 : 1;
-  if (readyWindows === expectedWindows) {
-    startSlideshow();
-  }
+ipcMain.on(channels.rendererReady, (event) => {
+  bannerManager.handleRendererReady();
 });
 
 // Settings IPC handlers
-ipcMain.handle('get-settings', () => {
-  return currentSettings;
+ipcMain.handle(channels.getSettings, () => {
+  return bannerManager.getSettings();
 });
 
-ipcMain.handle('get-available-displays', () => {
-  return getAvailableDisplays();
+ipcMain.handle(channels.getAvailableDisplays, () => {
+  return bannerManager.getAvailableDisplays();
 });
 
-ipcMain.handle('save-settings', (event, settings) => {
-  saveSettings(settings);
+ipcMain.handle(channels.saveSettings, (event, settings) => {
+  bannerManager.saveSettings(settings);
   return true;
 });
 
-ipcMain.handle('apply-display-settings', async (event, settings) => {
+ipcMain.handle(channels.applyDisplaySettings, async (event, settings) => {
   console.log('Applying display settings:', settings);
   
-  // Close existing banner windows
-  if (bannerWindow1 && !bannerWindow1.isDestroyed()) {
-    console.log('Closing Banner 1 window');
-    bannerWindow1.close();
-  }
-  if (bannerWindow2 && !bannerWindow2.isDestroyed()) {
-    console.log('Closing Banner 2 window');
-    bannerWindow2.close();
-  }
-
-  // Reset ready windows counter
-  readyWindows = 0;
-
-  // Determine icon path - use PNG as fallback if ICO doesn't exist
-  const assetsDir = path.join(__dirname, 'assets/icons');
-  let iconPath = null;
+  // Update settings and recreate banners if needed
+  bannerManager.updateSettings(settings);
   
-  // Check if assets directory exists first
-  if (fs.existsSync(assetsDir)) {
-    iconPath = fs.existsSync(path.join(assetsDir, 'app-icon.ico')) 
-      ? path.join(assetsDir, 'app-icon.ico')
-      : path.join(assetsDir, 'app-icon-512.png');
-  }
+  // Save settings to file after updating
+  bannerManager.saveSettings(settings);
   
-  console.log('Assets directory exists:', fs.existsSync(assetsDir));
-  console.log('Using icon path:', iconPath);
-  if (iconPath) {
-    console.log('Icon file exists:', fs.existsSync(iconPath));
-  }
-
-  // Create new banner windows with updated settings
-  // Banner 1 Window (only if enabled)
-  if (settings.banner1Enabled) {
-    const banner1Bounds = getDisplayBounds(settings.banner1Display);
-    console.log('Creating Banner 1 with bounds:', banner1Bounds);
-    const banner1Config = {
-      width: banner1Bounds.width,
-      height: banner1Bounds.height,
-      x: banner1Bounds.x,
-      y: banner1Bounds.y,
-      fullscreen: true,
-      frame: false,
-      webPreferences: {
-        preload: BANNER_PRELOAD_WEBPACK_ENTRY,
-      },
-      title: 'JoyRide Banner 1',
-      show: true,
-    };
-    if (iconPath && fs.existsSync(iconPath)) {
-      banner1Config.icon = iconPath;
-    }
-    bannerWindow1 = new BrowserWindow(banner1Config);
-    bannerWindow1.loadURL(BANNER_WEBPACK_ENTRY + '?banner=1');
-    bannerWindow1.setMenu(null);
-    if (!app.isPackaged) bannerWindow1.webContents.openDevTools({ mode: 'detach' });
-    setTimeout(() => {
-      if (bannerWindow1 && !bannerWindow1.isDestroyed()) {
-        bannerWindow1.webContents.send('set-font-color', settings.fontColor);
-      }
-    }, 1000);
-  } else {
-    bannerWindow1 = null;
-  }
-
-  // Banner 2 Window (only if enabled)
-  if (settings.banner2Enabled) {
-    const banner2Bounds = getDisplayBounds(settings.banner2Display);
-    console.log('Creating Banner 2 with bounds:', banner2Bounds);
-    const banner2Config = {
-      width: banner2Bounds.width,
-      height: banner2Bounds.height,
-      x: banner2Bounds.x,
-      y: banner2Bounds.y,
-      fullscreen: true,
-      frame: false,
-      webPreferences: {
-        preload: BANNER_PRELOAD_WEBPACK_ENTRY,
-      },
-      title: 'JoyRide Banner 2',
-      show: true,
-    };
-    if (iconPath && fs.existsSync(iconPath)) {
-      banner2Config.icon = iconPath;
-    }
-    bannerWindow2 = new BrowserWindow(banner2Config);
-    bannerWindow2.loadURL(BANNER_WEBPACK_ENTRY + '?banner=2');
-    bannerWindow2.setMenu(null);
-    if (!app.isPackaged) bannerWindow2.webContents.openDevTools({ mode: 'detach' });
-    setTimeout(() => {
-      if (bannerWindow2 && !bannerWindow2.isDestroyed()) {
-        bannerWindow2.webContents.send('set-font-color', settings.fontColor);
-      }
-    }, 1000);
-  } else {
-    bannerWindow2 = null;
-  }
-
   // Restart slideshow with new configuration
   setTimeout(() => {
     startSlideshow();
@@ -351,72 +146,60 @@ ipcMain.handle('apply-display-settings', async (event, settings) => {
 });
 
 // Data source IPC handlers
-ipcMain.handle('load-csv', async () => {
+ipcMain.handle(channels.loadCsv, async () => {
   const result = await dataSource.loadDataFromCsv();
   return result;
 });
 
-ipcMain.handle('get-members', () => {
+ipcMain.handle(channels.getMembers, () => {
   return dataSource.getMembers();
 });
 
-ipcMain.handle('add-member', (event, newMember) => {
+ipcMain.handle(channels.addMember, (event, newMember) => {
   return dataSource.addMember(newMember);
 });
 
-ipcMain.handle('update-member', (event, updatedMember) => {
+ipcMain.handle(channels.updateMember, (event, updatedMember) => {
   return dataSource.updateMember(updatedMember);
 });
 
-ipcMain.handle('mark-as-displayed', (event, memberId) => {
+ipcMain.handle(channels.markAsDisplayed, (event, memberId) => {
   return dataSource.markAsDisplayed(memberId);
 });
 
 // Media Manager IPC handlers
-ipcMain.handle('import-images', async () => {
+ipcMain.handle(channels.importImages, async () => {
   const newImages = await mediaManager.importSlideshowImages(controlPanelWindow);
   if (newImages && newImages.length > 0) {
     // Notify banner windows that the slides have changed and restart the slideshow
-    if (bannerWindow1) bannerWindow1.webContents.send('slideshow-updated');
-    if (bannerWindow2 && currentSettings.banner2Enabled) bannerWindow2.webContents.send('slideshow-updated');
+    bannerManager.broadcastToBanners(channels.slideshowUpdated);
     startSlideshow();
   }
   return newImages; // Return only the newly added images
 });
 
-ipcMain.handle('get-slideshow-images', () => {
+ipcMain.handle(channels.getSlideshowImages, () => {
   return mediaManager.getSlideshowImages();
 });
 
-ipcMain.handle('clear-slideshow-cache', async () => {
+ipcMain.handle(channels.clearSlideshowCache, async () => {
   mediaManager.clearSlideshowCache();
   // Notify banners that the slideshow is now empty
-  if (bannerWindow1) bannerWindow1.webContents.send('slideshow-updated');
-  if (bannerWindow2 && currentSettings.banner2Enabled) bannerWindow2.webContents.send('slideshow-updated');
+  bannerManager.broadcastToBanners(channels.slideshowUpdated);
   stopSlideshow();
   currentSlideIndex = 0;
 });
 
 // UI Toggles
-ipcMain.on('toggle-banner-number', (event, { isVisible }) => {
-  if (bannerWindow1 && !bannerWindow1.isDestroyed()) {
-    bannerWindow1.webContents.send('set-banner-number-visibility', isVisible);
-  }
-  if (bannerWindow2 && !bannerWindow2.isDestroyed() && currentSettings.banner2Enabled) {
-    bannerWindow2.webContents.send('set-banner-number-visibility', isVisible);
-  }
+ipcMain.on(channels.toggleBannerNumber, (event, { isVisible }) => {
+  bannerManager.broadcastToBanners(channels.setBannerNumberVisibility, isVisible);
 });
 
-ipcMain.on('update-font-color', (event, fontColor) => {
-  if (bannerWindow1 && !bannerWindow1.isDestroyed()) {
-    bannerWindow1.webContents.send('set-font-color', fontColor);
-  }
-  if (bannerWindow2 && !bannerWindow2.isDestroyed() && currentSettings.banner2Enabled) {
-    bannerWindow2.webContents.send('set-font-color', fontColor);
-  }
+ipcMain.on(channels.updateFontColor, (event, fontColor) => {
+  bannerManager.broadcastToBanners(channels.setFontColor, fontColor);
 });
 
-ipcMain.handle('get-current-slide-index', () => {
+ipcMain.handle(channels.getCurrentSlideIndex, () => {
   return currentSlideIndex;
 });
 
@@ -428,7 +211,7 @@ app.whenReady().then(() => {
   app.commandLine.appendSwitch('disable-features', 'AutofillServiceDownIndication');
 
   // Register a custom protocol to serve media files securely.
-  const mediaDir = path.join(app.getPath('userData'), 'slideshow_media');
+  const mediaDir = path.join(app.getPath('userData'), configManager.getPaths().mediaDir);
   protocol.registerFileProtocol('media', (request, callback) => {
     const url = request.url.replace(/^media:\/\//, '');
     const filePath = path.join(mediaDir, url);
@@ -451,6 +234,9 @@ app.whenReady().then(() => {
 
   mediaManager.loadInitialImages();
   createWindows();
+
+  // Initialize offline updater
+  updater = new OfflineUpdater();
 
   // On OS X it's common to re-create a window in the app when the
   // dock icon is clicked and there are no other windows open.

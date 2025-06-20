@@ -22,6 +22,8 @@ module.exports = {
       config: {
         iconUrl: 'https://raw.githubusercontent.com/your-repo/joyride-name-display/main/src/assets/icons/app-icon.ico',
         setupIcon: './src/assets/icons/app-icon.ico',
+        certificateFile: process.env.CODE_SIGNING_CERT_PATH,
+        certificatePassword: process.env.CODE_SIGNING_CERT_PASSWORD,
       },
     },
     {
@@ -45,6 +47,17 @@ module.exports = {
       },
     },
   ],
+  publishers: [
+    {
+      name: '@electron-forge/publisher-generic',
+      config: {
+        repository: {
+          owner: 'your-username',
+          name: 'joyride-name-display'
+        }
+      }
+    }
+  ],
   plugins: [
     {
       name: '@electron-forge/plugin-auto-unpack-natives',
@@ -59,16 +72,8 @@ module.exports = {
           entryPoints: [
             {
               html: './src/index.html',
-              js: './src/controlPanelRenderer.js',
-              name: 'control_panel',
-              preload: {
-                js: './src/preload.js',
-              },
-            },
-            {
-              html: './src/index.html',
-              js: './src/bannerRenderer.js',
-              name: 'banner',
+              js: './src/renderer.js',
+              name: 'renderer',
               preload: {
                 js: './src/preload.js',
               },

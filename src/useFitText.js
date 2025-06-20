@@ -1,8 +1,13 @@
-import { useLayoutEffect, useState } from 'react';
+import { useLayoutEffect, useState, useRef } from 'react';
+
+// Cache for font size calculations to avoid recalculation
+const fontSizeCache = new Map();
 
 const useFitText = (text) => {
   const [fontSize, setFontSize] = useState(175); // Default max font size
   const [ref, setRef] = useState(null);
+  const lastTextRef = useRef('');
+  const lastWidthRef = useRef(0);
 
   useLayoutEffect(() => {
     if (!ref || !text) {
@@ -12,17 +17,50 @@ const useFitText = (text) => {
     const parent = ref.parentElement;
     if (!parent) return;
 
-    // Start with max font size and scale down
-    let currentSize = 175;
-    ref.style.fontSize = `${currentSize}px`;
+    const parentWidth = parent.clientWidth;
+    const cacheKey = `${text}-${parentWidth}`;
 
-    // Check if text is overflowing
-    while (ref.scrollWidth > parent.clientWidth && currentSize > 10) {
-      currentSize--;
-      ref.style.fontSize = `${currentSize}px`;
+    // Check cache first
+    if (fontSizeCache.has(cacheKey)) {
+      setFontSize(fontSizeCache.get(cacheKey));
+      return;
     }
 
-    setFontSize(currentSize);
+    // Only recalculate if text or container width changed
+    if (lastTextRef.current === text && lastWidthRef.current === parentWidth) {
+      return;
+    }
+
+    lastTextRef.current = text;
+    lastWidthRef.current = parentWidth;
+
+    // Binary search for optimal font size (much faster than linear search)
+    let minSize = 10;
+    let maxSize = 175;
+    let optimalSize = 175;
+
+    while (minSize <= maxSize) {
+      const midSize = Math.floor((minSize + maxSize) / 2);
+      ref.style.fontSize = `${midSize}px`;
+
+      if (ref.scrollWidth <= parentWidth) {
+        optimalSize = midSize;
+        minSize = midSize + 1;
+      } else {
+        maxSize = midSize - 1;
+      }
+    }
+
+    // Cache the result
+    fontSizeCache.set(cacheKey, optimalSize);
+    setFontSize(optimalSize);
+
+    // Clean up cache if it gets too large (keep only last 100 entries)
+    if (fontSizeCache.size > 100) {
+      const entries = Array.from(fontSizeCache.entries());
+      fontSizeCache.clear();
+      entries.slice(-50).forEach(([key, value]) => fontSizeCache.set(key, value));
+    }
 
   }, [ref, text]);
 
