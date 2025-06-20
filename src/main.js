@@ -1,5 +1,6 @@
-const { app, BrowserWindow } = require('electron');
+const { app, BrowserWindow, ipcMain } = require('electron');
 const path = require('node:path');
+const { loadData } = require('./dataSource');
 
 // Handle creating/removing shortcuts on Windows when installing/uninstalling.
 if (require('electron-squirrel-startup')) {
@@ -49,6 +50,26 @@ const createWindows = () => {
   bannerWindow2.loadURL(BANNER_WEBPACK_ENTRY + '?banner=2');
 };
 
+// IPC Handlers
+ipcMain.on('banner-display', (event, { banner, nameData }) => {
+  const targetWindow = banner === 1 ? bannerWindow1 : bannerWindow2;
+  if (targetWindow) {
+    targetWindow.webContents.send('display-name', nameData);
+  }
+});
+
+ipcMain.on('banner-clear', (event, { banner }) => {
+  const targetWindow = banner === 1 ? bannerWindow1 : bannerWindow2;
+  if (targetWindow) {
+    targetWindow.webContents.send('clear-name');
+  }
+});
+
+ipcMain.handle('load-csv', async () => {
+  const result = await loadData();
+  return result;
+});
+
 // This method will be called when Electron has finished
 // initialization and is ready to create browser windows.
 // Some APIs can only be used after this event occurs.
@@ -75,40 +96,3 @@ app.on('window-all-closed', () => {
 
 // In this file you can include the rest of your app's specific main process
 // code. You can also put them in separate files and import them here.
-
-console.log('Banner number:', getBannerNumber(), 'Search:', window.location.search);
-
-function getBannerNumber() {
-  const params = new URLSearchParams(window.location.search);
-  return parseInt(params.get('banner') || '1', 10);
-}
-
-const Banner = () => {
-  const [displayName, setDisplayName] = useState(null);
-  const bannerNumber = getBannerNumber();
-
-  useEffect(() => {
-    window.electronAPI.on('display-name', (nameData) => {
-      setDisplayName(nameData);
-    });
-    window.electronAPI.on('clear-name', () => {
-      setDisplayName(null);
-    });
-  }, []);
-
-  return (
-    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100vh', fontFamily: 'sans-serif', background: '#222', color: '#fff' }}>
-      <h1 style={{ fontSize: 64 }}>Banner {bannerNumber}</h1>
-      {displayName ? (
-        <>
-          <div style={{ fontSize: 72, fontWeight: 'bold' }}>{displayName.firstLine}</div>
-          <div style={{ fontSize: 48 }}>{displayName.secondLine}</div>
-        </>
-      ) : (
-        <p style={{ fontSize: 24 }}>Waiting for name display...</p>
-      )}
-    </div>
-  );
-};
-
-export default Banner;
