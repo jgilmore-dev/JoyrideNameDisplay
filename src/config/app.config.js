@@ -13,14 +13,14 @@ module.exports = {
 
   // Banner Configuration
   banners: {
-    defaultFontColor: '#8B9091',
+    defaultFontColor: '#FFFFFF',
     maxBanners: 10,
     defaultSettings: {
       banners: [
         { id: 1, enabled: false, display: 0 },
         { id: 2, enabled: false, display: 1 }
       ],
-      fontColor: '#8B9091'
+      fontColor: '#FFFFFF'
     }
   },
 
@@ -40,14 +40,14 @@ module.exports = {
     controlPanel: {
       width: 900,
       height: 700,
-      title: 'JoyRide Control Panel',
+      title: 'Member Name Display Control Panel',
       minWidth: 800,
       minHeight: 600
     },
     banner: {
       fullscreen: true,
       frame: false,
-      title: 'JoyRide Banner'
+      title: 'Member Name Display Banner'
     }
   },
 

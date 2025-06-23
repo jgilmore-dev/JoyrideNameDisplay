@@ -220,7 +220,7 @@ const ControlPanel = () => {
   return (
     <div className="container">
       <div className="header-section">
-        <h1>JoyRide Control Panel</h1>
+        <h1>Member Name Display Control Panel</h1>
         <button 
           className="settings-button" 
           onClick={() => setShowSettings(!showSettings)}

@@ -146,7 +146,7 @@ class OfflineUpdater {
     });
     
     // Network share (configurable)
-    const networkShare = process.env.JOYRIDE_UPDATE_SHARE;
+    const networkShare = process.env.MEMBERNAMEDISPLAY_UPDATE_SHARE;
     if (networkShare) {
       sources.push({
         name: 'Network Share',
@@ -158,7 +158,7 @@ class OfflineUpdater {
     // USB drive detection (common drive letters)
     const driveLetters = ['D:', 'E:', 'F:', 'G:', 'H:', 'I:', 'J:', 'K:'];
     for (const drive of driveLetters) {
-      const usbUpdateDir = path.join(drive, 'JoyRideUpdates');
+      const usbUpdateDir = path.join(drive, 'MemberNameDisplayUpdates');
       if (fs.existsSync(usbUpdateDir)) {
         sources.push({
           name: `USB Drive (${drive})`,
@@ -181,8 +181,8 @@ class OfflineUpdater {
     const files = fs.readdirSync(updateDir);
     const updateFile = files.find(file => 
       file.endsWith('.exe') && 
-      file.includes('JoyRide') && 
-      file.includes('Setup')
+      file.toLowerCase().includes('membernamedisplay') && 
+      file.toLowerCase().includes('setup')
     );
 
     if (updateFile) {
@@ -206,8 +206,8 @@ class OfflineUpdater {
       const files = fs.readdirSync(networkPath);
       const updateFile = files.find(file => 
         file.endsWith('.exe') && 
-        file.includes('JoyRide') && 
-        file.includes('Setup')
+        file.toLowerCase().includes('membernamedisplay') && 
+        file.toLowerCase().includes('setup')
       );
 
       if (updateFile) {
@@ -256,7 +256,7 @@ class OfflineUpdater {
       buttons: ['Install Now', 'Later'],
       defaultId: 0,
       title: 'Update Available',
-      message: 'A new version of JoyRide Name Display is ready to install.',
+      message: 'A new version of Member Name Display is ready to install.',
       detail: `Version ${this.updateInfo.version} is ready to install. The application will restart after installation.`
     });
 

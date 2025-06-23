@@ -6,14 +6,14 @@
 }
 
 :root {
-  --text-color: #8B9091;
+  --text-color: #FFFFFF;
   --background-color: #F0F0F0;
   --background-color-dark: #222;
   --accent-color: #007BFF;
   --accent-color-hover: #0056b3;
   --border-color: #ccc;
   --form-background: #fff;
-  --header-color: #333;
+  --header-color: #FFFFFF;
 }
 
 html, body, #root {
@@ -62,7 +62,7 @@ input[type="text"] {
   justify-content: center;
   height: 100vh;
   background-color: var(--background-color-dark);
-  color: var(--text-color);
+  color: #FFFFFF;
   text-align: center;
   padding: 2rem;
   box-sizing: border-box;
@@ -90,16 +90,19 @@ input[type="text"] {
   line-height: 1.1;
   width: 100%;
   white-space: nowrap; /* Important for fitting algorithm */
+  color: #FFFFFF !important;
 }
 
 .last-name {
   font-size: 10rem; /* Increased from 8rem */
   margin-top: 1rem;
+  color: #FFFFFF !important;
 }
 
 .waiting-text {
   font-size: 2rem;
   width: 100%;
+  color: #FFFFFF !important;
 }
 
 .slideshow-image {
@@ -133,10 +136,30 @@ input[type="text"] {
 }
 
 .settings-button {
-  background-color: var(--text-color);
-  color: white;
+  background-color: var(--form-background);
+  color: #222;
   padding: 8px 16px;
   font-size: 0.9rem;
+  border: 1px solid var(--border-color);
+}
+
+.settings-button:hover {
+  background-color: var(--accent-color);
+  color: white;
+}
+
+.settings-section,
+.data-section,
+.media-section,
+.display-section,
+.member-section,
+.info-section,
+.update-section,
+.member-table,
+.member-table th,
+.member-table td,
+.list-container {
+  color: #222 !important;
 }
 
 .settings-section {
@@ -146,6 +169,37 @@ input[type="text"] {
   padding: 1.5rem;
   margin-bottom: 2rem;
   box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.settings-section h2,
+.settings-section h3,
+.settings-section label,
+.settings-section p,
+.member-section h2,
+.member-section h3,
+.member-section label,
+.member-section p,
+.media-section h2,
+.media-section h3,
+.media-section label,
+.media-section p,
+.info-section h2,
+.info-section h3,
+.info-section label,
+.info-section p,
+.data-section h2,
+.data-section h3,
+.data-section label,
+.data-section p,
+.display-section h2,
+.display-section h3,
+.display-section label,
+.display-section p,
+.update-section h2,
+.update-section h3,
+.update-section label,
+.update-section p {
+  color: #222 !important;
 }
 
 .settings-grid {
@@ -211,19 +265,6 @@ input[type="text"] {
   background-color: var(--accent-color);
 }
 
-.data-section,
-.media-section,
-.display-section,
-.member-section,
-.info-section {
-  background-color: var(--form-background);
-  border: 1px solid var(--border-color);
-  border-radius: 8px;
-  padding: 1.5rem;
-  margin-bottom: 1.5rem;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-}
-
 .data-section h3,
 .media-section h3,
 .display-section h3,
@@ -232,6 +273,17 @@ input[type="text"] {
   margin-bottom: 1rem;
   color: var(--header-color);
   font-size: 1.2rem;
+}
+
+.member-section,
+.media-section,
+.info-section {
+  background-color: var(--form-background);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
 }
 
 .member-section .button-group {
@@ -574,4 +626,17 @@ input[type="text"] {
   cursor: not-allowed;
   transform: none;
   box-shadow: none;
+}
+
+.member-table,
+.member-table th,
+.member-table td,
+.list-container,
+.media-section,
+.info-section,
+.member-section,
+.data-section,
+.display-section,
+.update-section {
+  color: #222;
 }

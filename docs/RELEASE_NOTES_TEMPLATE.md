@@ -1,6 +1,6 @@
 # Release Notes Template
 
-Welcome to another update from the JoyRide family! JoyRide is a car club created just for kids with special needs and their families. Our mission is simple: Kids. Cars. Smiles. Thank you for helping us make every event a celebration.
+Welcome to another update for Member Name Display! Member Name Display is a flexible application for displaying names and slideshows at any event or organization. Thank you for helping make every event a celebration.
 
 ## Version X.X.X - [Release Date]
 
@@ -21,14 +21,14 @@ Welcome to another update from the JoyRide family! JoyRide is a car club created
 - [Any known issues or limitations]
 
 ### 🚀 Installation
-1. Download the Windows installer from this release
+1. Download the installer from this release
 2. Run the installer and follow the setup wizard
 3. Launch the application from Start Menu or Desktop shortcut
 
 ### 📖 Documentation
-- [Quick Start Guide](https://github.com/jgilmore-dev/JoyrideNameDisplay/blob/main/docs/QUICK_START.md)
-- [Full User Guide](https://github.com/jgilmore-dev/JoyrideNameDisplay/blob/main/docs/USER_GUIDE.md)
-- [Sample CSV Template](https://github.com/jgilmore-dev/JoyrideNameDisplay/blob/main/sample-members.csv)
+- [Quick Start Guide](https://github.com/jgilmore-dev/MemberNameDisplay/blob/main/docs/QUICK_START.md)
+- [Full User Guide](https://github.com/jgilmore-dev/MemberNameDisplay/blob/main/docs/USER_GUIDE.md)
+- [Sample CSV Template](https://github.com/jgilmore-dev/MemberNameDisplay/blob/main/sample-members.csv)
 
 ---
 
@@ -55,14 +55,13 @@ Welcome to another update from the JoyRide family! JoyRide is a car club created
 - Multi-monitor support (optional)
 
 ### 🚀 Installation
-1. Download the Windows installer from this release
+1. Download the installer from this release
 2. Run the installer and follow the setup wizard
-3. Launch the application from Start Menu or Desktop shortcut
 
 ### 📖 Documentation
-- [Quick Start Guide](https://github.com/jgilmore-dev/JoyrideNameDisplay/blob/main/docs/QUICK_START.md)
-- [Full User Guide](https://github.com/jgilmore-dev/JoyrideNameDisplay/blob/main/docs/USER_GUIDE.md)
-- [Sample CSV Template](https://github.com/jgilmore-dev/JoyrideNameDisplay/blob/main/sample-members.csv)
+- [Quick Start Guide](https://github.com/jgilmore-dev/MemberNameDisplay/blob/main/docs/QUICK_START.md)
+- [Full User Guide](https://github.com/jgilmore-dev/MemberNameDisplay/blob/main/docs/USER_GUIDE.md)
+- [Sample CSV Template](https://github.com/jgilmore-dev/MemberNameDisplay/blob/main/sample-members.csv)
 
 ### 🎯 Perfect For
 - Special needs joyride events
@@ -72,4 +71,4 @@ Welcome to another update from the JoyRide family! JoyRide is a car club created
 
 ---
 
-Thank you for being part of the JoyRide community. Together, we create memories that last a lifetime. Kids. Cars. Smiles. 
+Thank you for being part of the Member Name Display community. Together, we create memories that last a lifetime. 

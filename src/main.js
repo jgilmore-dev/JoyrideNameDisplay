@@ -48,12 +48,10 @@ const createWindows = () => {
   console.log('Creating windows with settings:', bannerManager.getSettings());
 
   // Determine icon path - use PNG as fallback if ICO doesn't exist
-  const assetsDir = path.join(__dirname, configManager.getPaths().iconsDir);
-  let iconPath = null;
-  
-  // Check if assets directory exists first
-  if (fs.existsSync(assetsDir)) {
-    iconPath = fs.existsSync(path.join(assetsDir, 'app-icon.ico')) 
+  const assetsDir = path.join(__dirname, 'assets/icons');
+  let iconPath = path.join(assetsDir, 'MemberNameDisplayLogo.png');
+  if (!fs.existsSync(iconPath)) {
+    iconPath = fs.existsSync(path.join(assetsDir, 'app-icon.ico'))
       ? path.join(assetsDir, 'app-icon.ico')
       : path.join(assetsDir, 'app-icon-512.png');
   }
@@ -74,7 +72,7 @@ const createWindows = () => {
     webPreferences: {
       preload: RENDERER_PRELOAD_WEBPACK_ENTRY,
     },
-    title: windowConfig.title,
+    title: 'Member Name Display Control Panel',
   };
   
   // Only add icon if we have a valid path
@@ -91,7 +89,7 @@ const createWindows = () => {
   }
 
   // Create banner windows using BannerManager
-  bannerManager.createAllBanners();
+  bannerManager.createAllBanners('Member Name Display Banner', iconPath);
   
   // Set callback for when all banner windows are ready
   bannerManager.setOnAllWindowsReady(() => {

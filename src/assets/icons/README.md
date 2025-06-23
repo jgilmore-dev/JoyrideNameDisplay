@@ -1,4 +1,4 @@
-# Icon Requirements for Joyride Name Display App
+# Icon Requirements for Member Name Display App
 
 ## Files Needed from Designer
 
@@ -24,11 +24,14 @@
 - **Design Notes**: Can include more detail since it's displayed larger
 
 ## Design Guidelines
-- Use the Joyride brand colors and logo
+- Use your organization or event brand colors and logo
 - Ensure good contrast for visibility at small sizes
 - Test how it looks in grayscale (for accessibility)
 - Keep the design simple and recognizable
 - Consider how it will look on both light and dark backgrounds
 
 ## File Placement
-Place the final icon files in this directory (`src/assets/icons/`) to replace the placeholder files. 
+Place the final icon files in this directory (`src/assets/icons/`) to replace the placeholder files.
+
+## Main Logo
+- The main logo file is `MemberNameDisplayLogo.png` in this directory. Use this for all branding and to generate icons as needed. 
