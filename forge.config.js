@@ -25,7 +25,7 @@ module.exports = {
   packagerConfig: {
     asar: true,
     icon: getIconPath(process.platform),
-    executableName: 'joyridenamedisplay',
+    executableName: 'membernamedisplay',
   },
   rebuildConfig: {},
   makers: [

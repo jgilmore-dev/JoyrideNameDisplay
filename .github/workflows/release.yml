@@ -1,4 +1,4 @@
-name: Build and Release JoyRide Name Display
+name: Build and Release MemberNameDisplay
 
 on:
   release:
@@ -57,16 +57,13 @@ jobs:
           echo "Generated icons:"
           ls src/assets/icons/
 
-      - name: List icon files
-        run: ls -l src/assets/icons/
-
       - name: Build distributables
         run: npm run make
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: joyride-${{ matrix.os }}
+          name: membernamedisplay-${{ matrix.os }}
           path: out/make/**
 
   upload-release-assets:
@@ -87,6 +84,6 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           files: |
-            artifacts/**/joyride-*/**/*
+            artifacts/**/membernamedisplay-*/**/*
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} 
