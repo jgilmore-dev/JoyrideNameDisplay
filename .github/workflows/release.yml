@@ -54,6 +54,9 @@ jobs:
           echo "Generated icons:"
           ls src/assets/icons/
 
+      - name: List icon files
+        run: ls -l src/assets/icons/
+
       - name: Build distributables
         run: npm run make
 
