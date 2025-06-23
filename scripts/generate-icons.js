@@ -10,7 +10,7 @@ const { execSync } = require('child_process');
 const ICONS_DIR = path.join(__dirname, '../src/assets/icons');
 const TMP_DIR = path.join(ICONS_DIR, 'tmp');
 const SRC_APP_ICON = path.join(ICONS_DIR, 'app-icon-512.png');
-const SRC_FAVICON = path.join(ICONS_DIR, 'joyride-favicon-192.webp');
+const SRC_FAVICON = path.join(ICONS_DIR, 'favicon-192.png');
 
 const APP_ICON_SIZES = [16, 32, 48, 64, 128, 256, 512];
 const FAVICON_SIZES = [16, 32, 48, 64, 128, 192];
