@@ -23,7 +23,7 @@ jobs:
           # Strip 'v' prefix from tag name
           VERSION=${RELEASE_VERSION#v}
           echo "Setting package version to $VERSION"
-          npm version $VERSION --no-git-tag-version
+          npm version $VERSION --no-git-tag-version || true
         shell: bash
 
       - name: Set up Node.js
