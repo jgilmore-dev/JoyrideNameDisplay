@@ -78,7 +78,7 @@ Welcome to another update for Member Name Display! Member Name Display is a flex
 - [Sample CSV Template](https://github.com/jgilmore-dev/MemberNameDisplay/blob/main/sample-members.csv)
 
 ### Perfect For
-- Special needs joyride events
+- Special needs events
 - Community gatherings
 - Fundraising events
 - Any event where every name deserves to be celebrated

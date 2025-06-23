@@ -12,7 +12,7 @@
     "lint": "echo \"No linting configured\"",
     "icons": "node scripts/convert-icons.js",
     "scrape-icons": "node scripts/scrape-icons.js",
-    "download-icons": "node scripts/download-joyride-icons.js",
+    "download-icons": "node scripts/download-icons.js",
     "copy-icons": "node scripts/copy-icons.js",
     "generate-icons": "node scripts/generate-icons.js"
   },

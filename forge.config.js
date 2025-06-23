@@ -32,7 +32,7 @@ module.exports = {
     {
       name: '@electron-forge/maker-squirrel',
       config: {
-        iconUrl: 'https://raw.githubusercontent.com/jgilmore-dev/JoyrideNameDisplay/main/src/assets/icons/app-icon.ico',
+        iconUrl: 'https://raw.githubusercontent.com/jgilmore-dev/MemberNameDisplay/main/src/assets/icons/app-icon.ico',
         setupIcon: './src/assets/icons/app-icon.ico',
         certificateFile: process.env.CODE_SIGNING_CERT_PATH,
         certificatePassword: process.env.CODE_SIGNING_CERT_PASSWORD,
@@ -75,7 +75,7 @@ module.exports = {
       config: {
         repository: {
           owner: 'your-username',
-          name: 'joyride-name-display'
+          name: 'membernamedisplay'
         }
       }
     }

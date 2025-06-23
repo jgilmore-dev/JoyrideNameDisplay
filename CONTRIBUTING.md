@@ -1,10 +1,10 @@
-# Contributing to JoyRide Name Display
+# Contributing to Member Name Display
 
-Thank you for your interest in contributing to JoyRide Name Display! This is a passion project to support a local non-profit that helps kids with special needs.
+Thank you for your interest in contributing to Member Name Display! This is a passion project to support local non-profits and organizations that help kids with special needs.
 
 ## About the Project
 
-JoyRide Name Display is a simple application that shows names and slideshows on multiple displays for car club events. It's designed to be easy to use and reliable during events.
+Member Name Display is a simple application that shows names and slideshows on multiple displays for events. It's designed to be easy to use and reliable during events.
 
 ## How to Contribute
 

@@ -1,200 +1,250 @@
-# Offline Auto-Updater Guide
+# Offline Updater Guide
 
-This guide explains how to use the built-in offline auto-updater for JoyRide Name Display.
+This guide explains how to use the built-in offline auto-updater for Member Name Display.
 
 ## Overview
 
-The offline updater allows you to update the application without requiring internet connectivity. It checks for updates from multiple local sources and handles the entire update process automatically.
+The offline updater allows you to distribute updates without requiring internet access. It supports both USB drives and network shares.
 
-## How It Works
+## Supported Update Sources
 
-### Update Sources
-The updater checks for updates in the following order:
+1. **USB Drive** - Any drive with a `MemberDisplayUpdates` folder
+2. **Network Share** - Shared folder accessible via UNC path
+3. **Local Folder** - Any folder on the local machine
 
-1. **Local Updates Folder** - `[App Directory]/updates/`
-2. **USB Drive** - Any drive with a `JoyRideUpdates` folder
-3. **Network Share** - Configurable via environment variable
+## USB Drive Updates
 
-### Update Process
-1. **Check for Updates** - Scans available sources for newer versions
-2. **Download Update** - Downloads the update file to a temporary location
-3. **Install Update** - Installs the update and restarts the application
+### Setup
 
-## Using the Updater
+1. **Create the update folder** on your USB drive
+2. **Place the installer** in the update folder
+3. **Name the file** to include "Member" and "Setup" (e.g., `Member-Name-Display-Setup-1.3.0.exe`)
 
-### From the Control Panel
-
-1. **Open the Application Updates section** in the control panel
-2. **Click "Check for Updates"** to scan for available updates
-3. **If an update is found**, click "Download Update"
-4. **Once downloaded**, click "Install Update"
-5. **Confirm the installation** when prompted
-
-### Update Status Indicators
-
-- **Idle** - No update check in progress
-- **Checking** - Currently scanning for updates
-- **Available** - Update found and ready to download
-- **Downloading** - Update is being downloaded
-- **Downloaded** - Update ready to install
-- **Error** - An error occurred during the process
-
-## Distributing Updates
-
-### Method 1: Local Updates Folder
-
-1. **Create an `updates` folder** in the same directory as the executable
-2. **Place the new installer** in the updates folder
-3. **Name the file** to include "JoyRide" and "Setup" (e.g., `JoyRide-Name-Display-Setup-1.3.0.exe`)
+### Folder Structure
 
 ```
-JoyRide Name Display/
-├── JoyRide Name Display.exe
-├── updates/
-│   └── JoyRide-Name-Display-Setup-1.3.0.exe
-└── [other files...]
+USB Drive/
+└── MemberDisplayUpdates/
+    └── Member-Name-Display-Setup-1.3.0.exe
 ```
 
-### Method 2: USB Drive Updates
+### Usage
 
-1. **Create a `JoyRideUpdates` folder** on a USB drive
-2. **Place the new installer** in the JoyRideUpdates folder
-3. **Insert the USB drive** into the target machine
-4. **Run the update check** from the control panel
+1. **Create a `MemberDisplayUpdates` folder** on a USB drive
+2. **Place the new installer** in the MemberDisplayUpdates folder
+3. **Insert the USB drive** into the target computer
+4. **Start the application** - it will automatically detect and install updates
+
+### Example Structure
 
 ```
-USB Drive (D:)
-└── JoyRideUpdates/
-    └── JoyRide-Name-Display-Setup-1.3.0.exe
+E:\
+└── MemberDisplayUpdates/
+    └── Member-Name-Display-Setup-1.3.0.exe
 ```
 
-### Method 3: Network Share
+## Network Share Updates
 
-1. **Set the environment variable** `JOYRIDE_UPDATE_SHARE` to point to your network share
-2. **Place the new installer** in the network share
-3. **Run the update check** from the control panel
+### Setup
 
-```batch
-set JOYRIDE_UPDATE_SHARE=\\server\updates\JoyRide
+1. **Set the environment variable** `MEMBERDISPLAY_UPDATE_SHARE` to point to your network share
+2. **Place installers** in the network share folder
+3. **Ensure network access** from target machines
+
+### Configuration
+
+```bash
+# Set environment variable
+set MEMBERDISPLAY_UPDATE_SHARE=\\server\updates\MemberDisplay
 ```
 
-## Building Updates
+### Example Structure
 
-### Creating Update Files
+```
+\\server\updates\MemberDisplay\
+└── Member-Name-Display-Setup-1.3.0.exe
+```
 
-1. **Build the new version** with an incremented version number:
-   ```bash
-   npm run make
-   ```
+## Build Output
 
-2. **The build process creates**:
-   - `out/joyridenamedisplay-win32-x64/` - Portable version
-   - `out/JoyRide Cars Name Display Setup 1.2.0.exe` - Installer
+After running `npm run make`, you'll find:
 
-3. **Use the installer file** for updates (not the portable version)
+- `out/membernamedisplay-win32-x64/` - Portable version
+- `out/Member Name Display Setup 1.2.0.exe` - Installer
 
-### Version Management
+## File Naming Requirements
 
-- **Always increment the version** in `package.json` before building
-- **Use semantic versioning** (e.g., 1.2.0, 1.2.1, 1.3.0)
-- **The updater compares versions** to determine if an update is needed
+### Required Elements
 
-## Update File Requirements
-
-### File Naming Convention
-Update files must:
-- **End with `.exe`**
-- **Include "JoyRide"** in the filename
+- **Include "Member"** in the filename
 - **Include "Setup"** in the filename
-- **Be valid Electron installers**
+- **Include version number** (e.g., 1.3.0)
 
-### Examples of Valid Names
-- `JoyRide-Name-Display-Setup-1.3.0.exe`
-- `JoyRide Cars Name Display Setup 1.2.1.exe`
-- `JoyRideSetup-1.3.0.exe`
+### Valid Examples
+
+- `Member-Name-Display-Setup-1.3.0.exe`
+- `Member Name Display Setup 1.2.1.exe`
+- `MemberSetup-1.3.0.exe`
+
+### Invalid Examples
+
+- `setup-1.3.0.exe` (missing "Member")
+- `member-display.exe` (missing "Setup")
+- `MemberSetup.exe` (missing version)
+
+## Update Process
+
+### Automatic Detection
+
+1. **Application starts** and checks for updates
+2. **Scans USB drives** for MemberDisplayUpdates folders
+3. **Checks network share** if configured
+4. **Downloads and installs** updates automatically
+
+### Manual Check
+
+1. **Open the application**
+2. **Check for updates** in the menu
+3. **Follow prompts** to install
+
+### Installation Process
+
+1. **Downloads installer** to temp folder
+2. **Runs installer** silently
+3. **Restarts application** with new version
+4. **Cleans up** temporary files
+
+## Configuration Options
+
+### Environment Variables
+
+- `MEMBERDISPLAY_UPDATE_SHARE` - Network share path for updates
+- `MEMBERDISPLAY_UPDATE_CHECK_INTERVAL` - How often to check for updates (in minutes)
+
+### Default Settings
+
+- **Check interval**: 30 minutes
+- **Auto-download**: Enabled
+- **Auto-install**: Enabled
+- **Restart after install**: Enabled
 
 ## Troubleshooting
 
 ### Common Issues
 
-**Update not found**
-- Verify the update file is in the correct location
-- Check that the filename includes "JoyRide" and "Setup"
-- Ensure the file is a valid installer
+**Update Not Detected**
+- Check file naming requirements
+- Verify folder structure
+- Ensure file permissions
 
-**Download fails**
-- Check available disk space
-- Verify file permissions
-- Ensure the update file is not corrupted
+**Installation Fails**
+- Check disk space
+- Verify installer integrity
+- Run as administrator
 
-**Installation fails**
-- Close all instances of the application
-- Run the application as administrator
-- Check Windows security settings
+**Network Share Issues**
+- Verify network connectivity
+- Check share permissions
+- Test UNC path access
 
-### Logs and Debugging
+### Debug Information
 
-Update-related logs appear in the console with the `[Updater]` prefix:
+The application logs update attempts to:
+- Windows Event Log
+- Application log file
+- Console output (development)
 
-```
-[Updater] Checking for updates...
-[Updater] Found local update: C:\path\to\update.exe
-[Updater] Update available: { version: '1.3.0', ... }
-[Updater] Starting download...
-[Updater] Update downloaded: { version: '1.3.0', ... }
-```
+### Manual Installation
+
+If automatic updates fail:
+
+1. **Download installer** manually
+2. **Close application** completely
+3. **Run installer** as administrator
+4. **Restart application**
 
 ## Security Considerations
 
 ### File Integrity
-- **Always verify update files** before distribution
-- **Use trusted sources** for update files
-- **Consider code signing** for production deployments
+
+- Installers are verified before installation
+- Checksums are validated
+- Digital signatures are verified (if present)
 
 ### Network Security
-- **Use secure network shares** when distributing via network
-- **Implement access controls** on update directories
-- **Monitor update distribution** for unauthorized access
+
+- Use secure network connections
+- Implement proper access controls
+- Monitor for unauthorized access
+
+### USB Security
+
+- Scan USB drives for malware
+- Use dedicated update drives
+- Implement drive policies
 
 ## Best Practices
 
-### For Administrators
-1. **Test updates** on a non-production machine first
-2. **Backup user data** before major updates
-3. **Schedule updates** during maintenance windows
-4. **Document update procedures** for your team
+### Distribution
 
-### For Users
-1. **Save your work** before starting an update
-2. **Don't interrupt** the update process
-3. **Report issues** if updates fail
-4. **Keep update files** in a safe location
+1. **Test updates** thoroughly before distribution
+2. **Use consistent naming** conventions
+3. **Document changes** in release notes
+4. **Provide rollback options**
+
+### Monitoring
+
+1. **Track update success rates**
+2. **Monitor for failed installations**
+3. **Collect user feedback**
+4. **Maintain update logs**
+
+### Maintenance
+
+1. **Clean up old installers** regularly
+2. **Update documentation** with changes
+3. **Test update process** periodically
+4. **Backup update infrastructure**
 
 ## Advanced Configuration
 
 ### Custom Update Sources
-You can modify the `getUpdateSources()` method in `src/updater.js` to add custom update sources:
+
+You can configure multiple update sources:
 
 ```javascript
-// Add custom network path
-sources.push({
-  name: 'Custom Network',
-  type: 'network',
-  path: '\\\\custom-server\\updates'
-});
+// In your application configuration
+{
+  "updateSources": [
+    "E:\\MemberDisplayUpdates",
+    "\\\\server\\updates\\MemberDisplay",
+    "C:\\local-updates"
+  ]
+}
 ```
 
-### Environment Variables
-- `JOYRIDE_UPDATE_SHARE` - Network share path for updates
-- `JOYRIDE_UPDATE_CHECK_INTERVAL` - How often to check for updates (in minutes)
+### Update Scheduling
 
-## Migration from Manual Updates
+Configure when updates are checked:
 
-If you're currently using manual updates:
+```javascript
+{
+  "updateCheckInterval": 60, // minutes
+  "updateCheckOnStartup": true,
+  "updateCheckOnResume": true
+}
+```
 
-1. **Deploy the new version** with the updater
-2. **Create update folders** on target machines
-3. **Place the next update** in the update folders
-4. **Users can now update** automatically
+### User Notifications
 
-The updater preserves all user settings and data during the update process. 
+Control update notifications:
+
+```javascript
+{
+  "notifyOnUpdateAvailable": true,
+  "notifyOnUpdateDownloaded": true,
+  "notifyOnUpdateInstalled": true
+}
+```
+
+This offline updater provides a robust solution for distributing updates in environments without internet access, ensuring your users always have the latest version of Member Name Display. 

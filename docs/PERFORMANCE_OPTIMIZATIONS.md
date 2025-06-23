@@ -1,6 +1,6 @@
-# Performance Optimizations Summary
+# Performance Optimizations
 
-This document outlines the major performance optimizations implemented in the JoyRide Name Display application.
+This document outlines the major performance optimizations implemented in the Member Name Display application.
 
 ## Critical Memory Leak Fixes
 
