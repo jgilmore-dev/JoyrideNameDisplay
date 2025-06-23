@@ -40,6 +40,9 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y fakeroot dpkg
 
+      - name: List all files in src/assets/icons
+        run: ls -lR src/assets/icons/
+
       - name: Generate platform-specific icons
         run: |
           # Generate all platform icons
