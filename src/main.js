@@ -6,6 +6,7 @@ const mediaManager = require('./mediaManager');
 const BannerManager = require('./bannerManager');
 const configManager = require('./config/configManager');
 const OfflineUpdater = require('./updater');
+const WebServer = require('./webServer');
 
 // Handle creating/removing shortcuts on Windows when installing/uninstalling.
 if (require('electron-squirrel-startup')) {
@@ -15,6 +16,7 @@ if (require('electron-squirrel-startup')) {
 let controlPanelWindow;
 const bannerManager = new BannerManager();
 let updater;
+let webServer;
 
 // Slideshow Conductor
 let slideshowInterval;
@@ -32,6 +34,11 @@ function startSlideshow() {
     console.log(`[Main Process] Broadcasting set-slide, index: ${currentSlideIndex}`);
     const channels = configManager.getIpcChannels();
     bannerManager.broadcastToBanners(channels.setSlide, currentSlideIndex);
+    
+    // Broadcast to Pi displays
+    if (webServer && webServer.isRunning) {
+      webServer.broadcastSlideshowUpdate(currentSlideIndex);
+    }
   }, slideshowConfig.interval);
 }
 
@@ -89,7 +96,7 @@ const createWindows = () => {
   }
 
   // Create banner windows using BannerManager
-  bannerManager.createAllBanners('Member Name Display Banner', iconPath);
+  bannerManager.createAllBanners();
   
   // Set callback for when all banner windows are ready
   bannerManager.setOnAllWindowsReady(() => {
@@ -102,10 +109,20 @@ const channels = configManager.getIpcChannels();
 
 ipcMain.handle(channels.bannerDisplay, (event, { banner, nameData }) => {
   bannerManager.sendToBanner(banner, channels.displayName, nameData);
+  
+  // Broadcast to Pi displays
+  if (webServer && webServer.isRunning) {
+    webServer.broadcastNameDisplay(nameData);
+  }
 });
 
 ipcMain.handle(channels.bannerClear, (event, { banner }) => {
   bannerManager.sendToBanner(banner, channels.clearName);
+  
+  // Broadcast to Pi displays
+  if (webServer && webServer.isRunning) {
+    webServer.broadcastNameClear();
+  }
 });
 
 ipcMain.on(channels.rendererReady, (event) => {
@@ -195,10 +212,35 @@ ipcMain.on(channels.toggleBannerNumber, (event, { isVisible }) => {
 
 ipcMain.on(channels.updateFontColor, (event, fontColor) => {
   bannerManager.broadcastToBanners(channels.setFontColor, fontColor);
+  
+  // Broadcast to Pi displays
+  if (webServer && webServer.isRunning) {
+    webServer.broadcastFontColorUpdate(fontColor);
+  }
 });
 
 ipcMain.handle(channels.getCurrentSlideIndex, () => {
   return currentSlideIndex;
+});
+
+// Web Server IPC handlers
+ipcMain.handle('get-web-server-status', () => {
+  return webServer ? webServer.getStatus() : { isRunning: false };
+});
+
+ipcMain.handle('restart-web-server', () => {
+  if (webServer) {
+    webServer.stop();
+    setTimeout(() => {
+      webServer.start();
+    }, 1000);
+    return true;
+  }
+  return false;
+});
+
+ipcMain.handle('get-connected-pi-count', () => {
+  return webServer ? webServer.connectedClients.size : 0;
 });
 
 // This method will be called when Electron has finished
@@ -236,6 +278,15 @@ app.whenReady().then(() => {
   // Initialize offline updater
   updater = new OfflineUpdater();
 
+  // Initialize web server for Pi displays
+  webServer = new WebServer();
+  if (webServer.initialize()) {
+    webServer.start();
+    console.log('[Main] Web server started for Pi displays');
+  } else {
+    console.error('[Main] Failed to start web server');
+  }
+
   // On OS X it's common to re-create a window in the app when the
   // dock icon is clicked and there are no other windows open.
   app.on('activate', () => {
@@ -250,6 +301,10 @@ app.whenReady().then(() => {
 // explicitly with Cmd + Q.
 app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') {
+    // Stop web server before quitting
+    if (webServer) {
+      webServer.stop();
+    }
     app.quit();
   }
 });

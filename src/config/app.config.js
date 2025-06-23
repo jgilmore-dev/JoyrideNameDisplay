@@ -17,8 +17,8 @@ module.exports = {
     maxBanners: 10,
     defaultSettings: {
       banners: [
-        { id: 1, enabled: false, display: 0 },
-        { id: 2, enabled: false, display: 1 }
+        { id: 1, enabled: false, targetType: 'local', targetId: 0, display: 0 },
+        { id: 2, enabled: false, targetType: 'local', targetId: 1, display: 1 }
       ],
       fontColor: '#FFFFFF'
     }

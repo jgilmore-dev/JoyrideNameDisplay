@@ -236,28 +236,75 @@ const ControlPanel = () => {
           </div>
           {!settingsCollapsed && (
             <div className="settings-grid">
-              {settings.banners.map(banner => (
-                <div key={banner.id} className="setting-item banner-setting-row">
-                  <label>
-                    <input
-                      type="checkbox"
-                      checked={banner.enabled}
-                      onChange={e => updateBannerSetting(banner.id, 'enabled', e.target.checked)}
-                    />
-                    Enable Banner {banner.id}
-                  </label>
-                  <select
-                    value={banner.display}
-                    onChange={e => updateBannerSetting(banner.id, 'display', parseInt(e.target.value))}
-                  >
-                    {availableDisplays.map(display => (
-                      <option key={display.index} value={display.index}>
-                        {display.name} ({display.bounds.width}x{display.bounds.height})
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              ))}
+              {settings.banners.map(banner => {
+                // Always default targetType to 'local' if missing
+                const targetType = banner.targetType || 'local';
+                // For local banners, default display and targetId to 0 if missing
+                const displayIndex = (typeof banner.display === 'number' && banner.display >= 0) ? banner.display : 0;
+                const targetId = (targetType === 'local') ? ((typeof banner.targetId === 'number' && banner.targetId >= 0) ? banner.targetId : 0) : banner.targetId;
+                return (
+                  <div key={banner.id} className="setting-item banner-setting-row">
+                    <label>
+                      <input
+                        type="checkbox"
+                        checked={banner.enabled}
+                        onChange={e => updateBannerSetting(banner.id, 'enabled', e.target.checked)}
+                      />
+                      Enable Banner {banner.id}
+                    </label>
+                    <select
+                      value={targetType}
+                      onChange={e => {
+                        const newType = e.target.value;
+                        if (newType === 'pi') {
+                          // Update both fields in one go
+                          const newSettings = {
+                            ...settings,
+                            banners: settings.banners.map(b =>
+                              b.id === banner.id
+                                ? { ...b, targetType: 'pi', targetId: null }
+                                : b
+                            )
+                          };
+                          handleSettingsChange(newSettings);
+                        } else {
+                          const idx = (typeof banner.display === 'number' && banner.display >= 0) ? banner.display : 0;
+                          const newSettings = {
+                            ...settings,
+                            banners: settings.banners.map(b =>
+                              b.id === banner.id
+                                ? { ...b, targetType: 'local', targetId: idx, display: idx }
+                                : b
+                            )
+                          };
+                          handleSettingsChange(newSettings);
+                        }
+                      }}
+                    >
+                      <option value="local">Local Display</option>
+                      <option value="pi">Pi Display</option>
+                    </select>
+                    {targetType === 'local' ? (
+                      <select
+                        value={displayIndex}
+                        onChange={e => {
+                          const idx = parseInt(e.target.value);
+                          updateBannerSetting(banner.id, 'display', idx);
+                          updateBannerSetting(banner.id, 'targetId', idx);
+                        }}
+                      >
+                        {availableDisplays.map(display => (
+                          <option key={display.index} value={display.index}>
+                            {display.name} ({display.bounds.width}x{display.bounds.height})
+                          </option>
+                        ))}
+                      </select>
+                    ) : (
+                      <span style={{ marginLeft: 8, fontStyle: 'italic' }}>All Pi Displays</span>
+                    )}
+                  </div>
+                );
+              })}
               <div className="setting-item">
                 <label>Font Color:</label>
                 <div className="color-picker-container">
@@ -306,7 +353,7 @@ const ControlPanel = () => {
                   <button
                     type="button"
                     onClick={() => {
-                      const defaultColor = '#8B9091';
+                      const defaultColor = '#FFFFFF';
                       setColorInputValue(defaultColor);
                       handleSettingsChange({
                         ...settings,

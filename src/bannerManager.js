@@ -180,7 +180,7 @@ class BannerManager {
     // Create enabled banners
     this.settings.banners.forEach(bannerConfig => {
       console.log(`[BannerManager] Banner config:`, bannerConfig);
-      if (bannerConfig.enabled) {
+      if (bannerConfig.enabled && bannerConfig.targetType === 'local') {
         const bannerWindow = this.createBannerWindow(
           bannerConfig.id, 
           bannerConfig.display, 
@@ -262,6 +262,21 @@ class BannerManager {
       console.log(`[BannerManager] Banners changed: ${bannersChanged}`);
       console.log(`[BannerManager] Old banners:`, oldSettings.banners);
       console.log(`[BannerManager] New banners:`, newSettings.banners);
+      
+      // Close windows for banners that were enabled and are now disabled
+      if (oldSettings && oldSettings.banners && newSettings && newSettings.banners) {
+        oldSettings.banners.forEach(oldBanner => {
+          const newBanner = newSettings.banners.find(b => b.id === oldBanner.id);
+          if (oldBanner.enabled && newBanner && !newBanner.enabled) {
+            const win = this.getBanner(oldBanner.id);
+            if (win && !win.isDestroyed()) {
+              console.log(`[BannerManager] Closing window for disabled banner ${oldBanner.id}`);
+              win.close();
+              this.banners.delete(oldBanner.id);
+            }
+          }
+        });
+      }
       
       // Update settings
       this.settings = newSettings;

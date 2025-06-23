@@ -92,3 +92,11 @@ typings/
 out/
 
 dist/
+
+# Temporary files
+test.txt
+*.tmp
+*.temp
+
+# Release notes in root directory (should be in /docs)
+RELEASE_NOTES_v*.md

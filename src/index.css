@@ -252,8 +252,8 @@ input[type="text"] {
 
 .reset-color-button {
   padding: 8px 12px;
-  background-color: var(--text-color);
-  color: white;
+  background-color: #FFFFFF;
+  color: #333;
   border: none;
   border-radius: 4px;
   cursor: pointer;

@@ -34,6 +34,14 @@ module.exports = [
       filename: 'assets/icons/[name][ext]'
     }
   },
+  // Copy font files to build directory
+  {
+    test: /\.(otf|ttf|woff|woff2|eot)$/,
+    type: 'asset/resource',
+    generator: {
+      filename: 'assets/fonts/[name][ext]'
+    }
+  },
   // Put your webpack loader rules in this array.  This is where you would put
   // your ts-loader configuration for instance:
   /**

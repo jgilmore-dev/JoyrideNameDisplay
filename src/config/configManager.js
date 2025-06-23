@@ -252,8 +252,22 @@ class ConfigManager {
         throw new Error('Banner enabled must be a boolean');
       }
 
-      if (typeof banner.display !== 'number' || banner.display < 0) {
-        throw new Error('Banner display must be a non-negative number');
+      if (!['local', 'pi'].includes(banner.targetType)) {
+        throw new Error('Banner targetType must be "local" or "pi"');
+      }
+
+      if (banner.targetType === 'local') {
+        if (typeof banner.targetId !== 'number' || banner.targetId < 0) {
+          throw new Error('Banner targetId must be a non-negative number for local banners');
+        }
+        if (typeof banner.display !== 'number' || banner.display < 0) {
+          throw new Error('Banner display must be a non-negative number for local banners');
+        }
+      } else if (banner.targetType === 'pi') {
+        if (banner.targetId !== null && typeof banner.targetId !== 'string') {
+          throw new Error('Banner targetId must be null or a string for pi banners');
+        }
+        // display is not required for pi banners
       }
     }
 

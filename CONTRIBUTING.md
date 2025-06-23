@@ -34,6 +34,20 @@ JoyRide Name Display is a simple application that shows names and slideshows on 
 - **Document changes** - Update README or add comments if needed
 - **Ask questions** - If you're unsure about something, ask first!
 
+## Documentation Standards
+
+### Professional Appearance
+- **No emojis** - Keep all documentation clean, clear, and professional
+- **Clear headings** - Use descriptive section headers
+- **Consistent formatting** - Follow existing documentation style
+- **Concise language** - Be direct and avoid unnecessary embellishment
+
+### Writing Guidelines
+- **Use clear, professional language** - Avoid casual or informal tone
+- **Focus on functionality** - Emphasize what the software does and how to use it
+- **Maintain consistency** - Follow established patterns in existing documentation
+- **Keep it readable** - Use proper grammar, spelling, and punctuation
+
 ## What We're Looking For
 
 ### High Priority
