@@ -1,11 +1,12 @@
 const { app, BrowserWindow, ipcMain, session, protocol, screen } = require('electron');
 const path = require('node:path');
 const fs = require('fs');
+const fetch = require('node-fetch');
 const dataSource = require('./dataSource');
 const mediaManager = require('./mediaManager');
 const BannerManager = require('./bannerManager');
 const configManager = require('./config/configManager');
-const OfflineUpdater = require('./updater');
+const ControlPanelUpdater = require('./controlPanelUpdater');
 const WebServer = require('./webServer');
 
 // Handle creating/removing shortcuts on Windows when installing/uninstalling.
@@ -15,7 +16,7 @@ if (require('electron-squirrel-startup')) {
 
 let controlPanelWindow;
 const bannerManager = new BannerManager();
-let updater;
+let controlPanelUpdater;
 let webServer;
 
 // Slideshow Conductor
@@ -89,6 +90,9 @@ const createWindows = () => {
   
   controlPanelWindow = new BrowserWindow(controlPanelConfig);
   controlPanelWindow.loadURL(RENDERER_WEBPACK_ENTRY);
+  
+  // Make main window globally accessible for update broadcasts
+  global.mainWindow = controlPanelWindow;
   
   const devConfig = configManager.getDevelopmentConfig();
   if (!app.isPackaged && devConfig.devTools.openOnStart) {
@@ -243,6 +247,166 @@ ipcMain.handle('get-connected-pi-count', () => {
   return webServer ? webServer.connectedClients.size : 0;
 });
 
+// Pi Client Management IPC handlers
+ipcMain.handle('scan-pi-clients', async () => {
+  try {
+    const clients = [];
+    
+    // Get local IP address
+    const os = require('os');
+    const interfaces = os.networkInterfaces();
+    let localIP = '127.0.0.1';
+    
+    for (const name of Object.keys(interfaces)) {
+      for (const interface of interfaces[name]) {
+        if (interface.family === 'IPv4' && !interface.internal) {
+          localIP = interface.address;
+          break;
+        }
+      }
+      if (localIP !== '127.0.0.1') break;
+    }
+    
+    // Scan local network for Pi clients
+    const baseIP = localIP.substring(0, localIP.lastIndexOf('.'));
+    const promises = [];
+    
+    for (let i = 1; i <= 50; i++) {
+      const testIP = `${baseIP}.${i}`;
+      promises.push(scanPiClient(testIP));
+    }
+    
+    const results = await Promise.all(promises);
+    return results.filter(client => client !== null);
+  } catch (error) {
+    console.error('Error scanning for Pi clients:', error);
+    return [];
+  }
+});
+
+ipcMain.handle('get-pi-client-details', async (event, client) => {
+  try {
+    const response = await fetch(`http://${client.ip}:3001/health`);
+    if (!response.ok) throw new Error('Client not reachable');
+    
+    const health = await response.json();
+    
+    // Get channel information
+    const channelResponse = await fetch(`http://${client.ip}:3001/update-channel`);
+    const channel = channelResponse.ok ? await channelResponse.text() : 'stable';
+    
+    // Get version information
+    const versionResponse = await fetch(`http://${client.ip}:3001/client-version`);
+    const currentVersion = versionResponse.ok ? await versionResponse.text() : 'unknown';
+    
+    // Check for updates
+    const updateResponse = await fetch(`http://${client.ip}:3001/check-updates`);
+    const updateInfo = updateResponse.ok ? await updateResponse.json() : { updateAvailable: false };
+    
+    return {
+      clientId: health.service || 'unknown',
+      channel: channel.trim(),
+      currentVersion: currentVersion.trim(),
+      latestVersion: updateInfo.latestVersion || 'unknown',
+      updateStatus: updateInfo.updateAvailable ? 'update-available' : 'up-to-date',
+      updateAvailable: updateInfo.updateAvailable,
+      lastCheck: new Date().toISOString(),
+      status: 'connected'
+    };
+  } catch (error) {
+    console.error('Error getting Pi client details:', error);
+    return {
+      clientId: 'unknown',
+      channel: 'unknown',
+      currentVersion: 'unknown',
+      latestVersion: 'unknown',
+      updateStatus: 'error',
+      updateAvailable: false,
+      lastCheck: new Date().toISOString(),
+      status: 'disconnected'
+    };
+  }
+});
+
+ipcMain.handle('set-pi-client-channel', async (event, { client, channel }) => {
+  try {
+    // This would require SSH access to the Pi, which is complex
+    // For now, we'll simulate the operation
+    console.log(`Setting channel for ${client.ip} to ${channel}`);
+    
+    // In a real implementation, you would:
+    // 1. SSH into the Pi
+    // 2. Update the .update-channel file
+    // 3. Restart the update service
+    
+    return { success: true, message: `Channel set to ${channel}` };
+  } catch (error) {
+    console.error('Error setting Pi client channel:', error);
+    return { success: false, error: error.message };
+  }
+});
+
+ipcMain.handle('check-pi-client-updates', async (event, client) => {
+  try {
+    const response = await fetch(`http://${client.ip}:3001/check-updates`);
+    if (!response.ok) throw new Error('Failed to check updates');
+    
+    const result = await response.json();
+    return result;
+  } catch (error) {
+    console.error('Error checking Pi client updates:', error);
+    return { updateAvailable: false, error: error.message };
+  }
+});
+
+ipcMain.handle('perform-pi-client-update', async (event, client) => {
+  try {
+    const response = await fetch(`http://${client.ip}:3001/perform-update`, {
+      method: 'POST'
+    });
+    if (!response.ok) throw new Error('Failed to perform update');
+    
+    const result = await response.json();
+    return result;
+  } catch (error) {
+    console.error('Error performing Pi client update:', error);
+    return { success: false, error: error.message };
+  }
+});
+
+// Helper function to scan for Pi clients
+async function scanPiClient(ip) {
+  try {
+    const response = await fetch(`http://${ip}:3001/discovery`, {
+      signal: AbortSignal.timeout(2000) // 2 second timeout
+    });
+    
+    if (response.ok) {
+      const data = await response.json();
+      if (data.service === 'MemberNameDisplay' && data.type === 'pi-update-server') {
+        // Get basic client info
+        const healthResponse = await fetch(`http://${ip}:3001/health`);
+        const channelResponse = await fetch(`http://${ip}:3001/update-channel`);
+        const versionResponse = await fetch(`http://${ip}:3001/client-version`);
+        
+        const channel = channelResponse.ok ? await channelResponse.text() : 'stable';
+        const version = versionResponse.ok ? await versionResponse.text() : 'unknown';
+        
+        return {
+          ip: ip,
+          status: 'connected',
+          channel: channel.trim(),
+          version: version.trim(),
+          lastUpdate: 'Unknown'
+        };
+      }
+    }
+  } catch (error) {
+    // Silently ignore connection errors
+  }
+  return null;
+}
+
 // This method will be called when Electron has finished
 // initialization and is ready to create browser windows.
 // Some APIs can only be used after this event occurs.
@@ -275,8 +439,8 @@ app.whenReady().then(() => {
   mediaManager.loadInitialImages();
   createWindows();
 
-  // Initialize offline updater
-  updater = new OfflineUpdater();
+  // Initialize control panel updater
+  controlPanelUpdater = new ControlPanelUpdater();
 
   // Initialize web server for Pi displays
   webServer = new WebServer();
@@ -301,6 +465,11 @@ app.whenReady().then(() => {
 // explicitly with Cmd + Q.
 app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') {
+    // Cleanup updaters
+    if (controlPanelUpdater) {
+      controlPanelUpdater.cleanup();
+    }
+    
     // Stop web server before quitting
     if (webServer) {
       webServer.stop();

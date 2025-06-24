@@ -38,6 +38,11 @@ This application ensures every participant gets the recognition they deserve, wi
 * **[User Instructions](docs/USER_GUIDE.md)** - Everything your team needs to know
 * **[Sample Data](sample-members.csv)** - Test it out with our example file
 
+## For Developers
+
+* **[Project Specifications](docs/PROJECT_SPECIFICATIONS.md)** - Comprehensive project goals, requirements, and technical specifications
+* **[Contributing Guide](CONTRIBUTING.md)** - How to contribute to the project
+
 ## System Requirements
 
 * **Windows 10/11** (64-bit)
@@ -95,7 +100,91 @@ Brown,Sarah,Alex,Emma
 
 ## Updates
 
-* Visit the [releases page](https://github.com/jgilmore-dev/MemberNameDisplay/releases) for updates
+The application includes a built-in update system that automatically checks for new versions and allows for easy updates from multiple sources:
+
+* **Automatic Updates**: Checks for updates every 6 hours
+* **Multiple Sources**: GitHub releases, local files, network shares, and USB drives
+* **Safe Installation**: Automatic rollback if updates fail
+* **User-Friendly Interface**: Integrated update manager in the control panel
+
+### Control Panel Channel System
+
+The control panel supports a dual-channel update system for flexible development and production workflows:
+
+* **Stable Channel** (Default): Downloads from official GitHub releases
+  * High stability and reliability
+  * Updates only when releases are published
+  * Recommended for production environments
+
+* **Testing Channel**: Downloads from development builds and pre-releases
+  * Latest features and fixes
+  * Updates on every development build or pre-release
+  * May contain bugs or instability
+  * Recommended for development and testing
+
+#### Managing Control Panel Channels
+
+Use the Update Manager in the control panel to switch between channels:
+
+1. **Open Update Manager**: Go to the "Software Updates" section
+2. **View Current Channel**: See your current update channel
+3. **Switch Channel**: Click "Switch to Testing" or "Switch to Stable"
+4. **Confirm Change**: The channel will change immediately
+5. **Check Updates**: An automatic update check will occur
+
+This allows you to:
+* Keep production control panels on stable releases by default
+* Opt specific installations into testing for development work
+* Test new features without building new executables
+* Maintain system stability across your deployment
+
+For detailed information about the control panel update system, see the [Control Panel Channel System Guide](docs/CONTROL_PANEL_CHANNEL_SYSTEM.md).
+
+### Raspberry Pi Client Updates
+
+The Raspberry Pi display clients support a dual-channel update system for flexible development and production workflows:
+
+* **Stable Channel** (Default): Downloads from official GitHub releases
+  * High stability and reliability
+  * Updates only when releases are published
+  * Recommended for production environments
+
+* **Testing Channel**: Downloads from the main development branch
+  * Latest features and fixes
+  * Updates on every commit to main
+  * May contain bugs or instability
+  * Recommended for development and testing
+
+#### Managing Pi Client Channels
+
+Use the channel manager script to control update behavior:
+
+```bash
+# Show current status
+./pi-channel-manager.sh status
+
+# Switch to testing channel for development
+./pi-channel-manager.sh set-channel testing
+
+# Switch back to stable channel for production
+./pi-channel-manager.sh set-channel stable
+
+# Interactive setup
+./pi-channel-manager.sh setup
+
+# Check for updates
+./pi-channel-manager.sh check
+```
+
+This allows you to:
+* Keep production Pis on stable releases by default
+* Opt specific Pis into testing for development work
+* Test new features without recompiling
+* Maintain system stability across your deployment
+
+For detailed information about Pi client updates, see the [Pi Client Workflow Integration Guide](docs/PI_CLIENT_WORKFLOW_INTEGRATION.md).
+
+* Visit the [releases page](https://github.com/jgilmore-dev/MemberNameDisplay/releases) for manual downloads
 * Each new version includes improvements based on feedback from the community
 
 ## License

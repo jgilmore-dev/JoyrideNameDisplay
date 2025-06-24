@@ -3,6 +3,8 @@ import MemberList from './memberList.jsx';
 import { formatFirstNames, debounce } from './utils.js';
 import AddMemberForm from './addMemberForm.jsx';
 import EditMemberForm from './editMemberForm.jsx';
+import UpdateManager from './updateManager.jsx';
+import PiClientManager from './piClientManager.jsx';
 
 // Debounce hook for search optimization
 const useDebounce = (value, delay) => {
@@ -43,6 +45,8 @@ const ControlPanel = () => {
   const [mediaCollapsed, setMediaCollapsed] = useState(false);
   const [displayCollapsed, setDisplayCollapsed] = useState(false);
   const [memberCollapsed, setMemberCollapsed] = useState(false);
+  const [updateCollapsed, setUpdateCollapsed] = useState(false);
+  const [piCollapsed, setPiCollapsed] = useState(false);
 
   // Debounce search term to improve performance
   const debouncedSearchTerm = useDebounce(searchTerm, 300);
@@ -469,6 +473,28 @@ const ControlPanel = () => {
                 🗑️ Clear Slideshow Images
               </button>
             </div>
+          </div>
+        )}
+      </div>
+
+      <div className="update-section">
+        <div className="section-header" onClick={() => setUpdateCollapsed(!updateCollapsed)}>
+          <span>{updateCollapsed ? '►' : '▼'}</span> <h3>Software Updates</h3>
+        </div>
+        {!updateCollapsed && (
+          <div>
+            <UpdateManager />
+          </div>
+        )}
+      </div>
+
+      <div className="pi-section">
+        <div className="section-header" onClick={() => setPiCollapsed(!piCollapsed)}>
+          <span>{piCollapsed ? '►' : '▼'}</span> <h3>Pi Client Manager</h3>
+        </div>
+        {!piCollapsed && (
+          <div>
+            <PiClientManager />
           </div>
         )}
       </div>

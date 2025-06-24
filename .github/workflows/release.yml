@@ -65,11 +65,26 @@ jobs:
       - name: Build distributables
         run: npm run make
 
+      - name: Verify release assets
+        run: npm run verify-release
+
+      - name: Organize artifacts for update system
+        run: |
+          # Create a clean artifacts directory for the update system
+          mkdir -p artifacts/${{ matrix.os }}
+          
+          # Copy all build outputs to organized structure
+          cp -r out/make/* artifacts/${{ matrix.os }}/
+          
+          # List organized artifacts
+          echo "Organized artifacts for ${{ matrix.os }}:"
+          find artifacts/${{ matrix.os }} -type f -name "*.exe" -o -name "*.dmg" -o -name "*.deb" -o -name "*.rpm" -o -name "*.AppImage" -o -name "*.zip" | head -10
+
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: membernamedisplay-${{ matrix.os }}
-          path: out/make/**
+          name: membernamedisplay-${{ matrix.os }}-artifacts
+          path: artifacts/${{ matrix.os }}/**
 
   upload-release-assets:
     needs: build
@@ -82,13 +97,116 @@ jobs:
         with:
           path: artifacts
 
-      - name: List artifacts
-        run: ls -R artifacts
+      - name: List all artifacts
+        run: |
+          echo "All downloaded artifacts:"
+          find artifacts -type f -name "*.exe" -o -name "*.dmg" -o -name "*.deb" -o -name "*.rpm" -o -name "*.AppImage" -o -name "*.zip" | sort
+
+      - name: Generate update metadata
+        env:
+          RELEASE_VERSION: ${{ github.ref_name }}
+        run: |
+          # Strip 'v' prefix from tag name
+          VERSION=${RELEASE_VERSION#v}
+          
+          # Find all installer files
+          INSTALLERS=$(find artifacts -type f \( -name "*.exe" -o -name "*.dmg" -o -name "*.deb" -o -name "*.rpm" -o -name "*.AppImage" -o -name "*.zip" \) | grep -E "(MemberNameDisplay|membernamedisplay)" | sort)
+          
+          # Create update metadata
+          cat > update-metadata.json << EOF
+          {
+            "version": "$VERSION",
+            "releaseDate": "$(date -u +%Y-%m-%dT%H:%M:%S.000Z)",
+            "releaseNotes": "${{ github.event.release.body }}",
+            "installerFiles": [
+          EOF
+          
+          # Add each installer to metadata
+          FIRST=true
+          for installer in $INSTALLERS; do
+            if [ "$FIRST" = true ]; then
+              FIRST=false
+            else
+              echo "," >> update-metadata.json
+            fi
+            echo "              \"$(basename $installer)\"" >> update-metadata.json
+          done
+          
+          echo "            ]" >> update-metadata.json
+          echo "          }" >> update-metadata.json
+          
+          echo "Generated update metadata:"
+          cat update-metadata.json
+
+      - name: Prepare Pi client assets
+        env:
+          RELEASE_VERSION: ${{ github.ref_name }}
+        run: |
+          # Strip 'v' prefix from tag name
+          VERSION=${RELEASE_VERSION#v}
+          
+          # Create Pi assets directory
+          mkdir -p pi-assets
+          
+          # Copy Pi client files
+          cp src/pi-display-client.html pi-assets/
+          cp scripts/pi-boot-setup.sh pi-assets/
+          cp scripts/update-client.sh pi-assets/
+          
+          # Create Pi client metadata
+          cat > pi-assets/pi-client-metadata.json << EOF
+          {
+            "version": "$VERSION",
+            "releaseDate": "$(date -u +%Y-%m-%dT%H:%M:%S.000Z)",
+            "files": [
+              "pi-display-client.html",
+              "pi-boot-setup.sh",
+              "update-client.sh"
+            ],
+            "updateUrl": "https://github.com/jgilmore-dev/MemberNameDisplay/releases/download/${{ github.ref_name }}/pi-display-client.html",
+            "setupUrl": "https://github.com/jgilmore-dev/MemberNameDisplay/releases/download/${{ github.ref_name }}/pi-boot-setup.sh"
+          }
+          EOF
+          
+          # Create Pi client package
+          tar -czf pi-client-$VERSION.tar.gz -C pi-assets .
+          
+          echo "Pi client assets prepared:"
+          ls -la pi-assets/
+          echo "Pi client package: pi-client-$VERSION.tar.gz"
 
       - name: Upload assets to release
         uses: softprops/action-gh-release@v2
         with:
           files: |
             artifacts/**/membernamedisplay-*/**/*
+            update-metadata.json
+            pi-assets/*
+            pi-client-${{ github.ref_name }}.tar.gz
+          body: |
+            ## Release ${{ github.ref_name }}
+            
+            ${{ github.event.release.body }}
+            
+            ### Platform Support
+            - **Windows**: .exe installer
+            - **macOS**: .dmg and .zip packages
+            - **Linux**: .deb, .rpm, and .AppImage packages
+            - **Raspberry Pi**: HTML client and setup scripts
+            
+            ### Update System
+            This release includes the unified cross-platform update system that automatically detects and installs updates from:
+            - GitHub releases (automatic)
+            - Local update directories
+            - Network shares
+            - USB drives
+            
+            ### Installation
+            **Desktop Applications**: Download the appropriate installer for your platform and run it. The application will automatically check for updates on startup.
+            
+            **Raspberry Pi Clients**: 
+            - Use `pi-boot-setup.sh` for initial setup
+            - Clients will automatically update from this release
+            - Manual update: `wget https://github.com/jgilmore-dev/MemberNameDisplay/releases/download/${{ github.ref_name }}/pi-display-client.html`
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} 

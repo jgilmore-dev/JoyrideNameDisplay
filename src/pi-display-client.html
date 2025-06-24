@@ -29,6 +29,119 @@
             height: 100vh;
         }
 
+        #splash-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            transition: opacity 0.5s ease;
+        }
+
+        #splash-screen.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .logo {
+            font-size: 3rem;
+            font-weight: bold;
+            margin-bottom: 2rem;
+            text-align: center;
+        }
+
+        .subtitle {
+            font-size: 1.2rem;
+            margin-bottom: 3rem;
+            text-align: center;
+            opacity: 0.9;
+        }
+
+        .connection-info {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 2rem;
+            border-radius: 10px;
+            text-align: center;
+            max-width: 500px;
+            margin-bottom: 2rem;
+        }
+
+        .connection-info h3 {
+            margin-bottom: 1rem;
+            font-size: 1.5rem;
+        }
+
+        .connection-details {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .detail-item {
+            text-align: left;
+        }
+
+        .detail-label {
+            font-size: 0.9rem;
+            opacity: 0.7;
+            margin-bottom: 0.25rem;
+        }
+
+        .detail-value {
+            font-size: 1.1rem;
+            font-weight: bold;
+            word-break: break-all;
+        }
+
+        .qr-code-container {
+            margin: 1rem 0;
+        }
+
+        .qr-code {
+            width: 150px;
+            height: 150px;
+            background: #fff;
+            margin: 0 auto;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 5px;
+        }
+
+        .status-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 0.5rem;
+        }
+
+        .status-indicator.connecting {
+            background: #f39c12;
+            animation: pulse 1.5s infinite;
+        }
+
+        .status-indicator.connected {
+            background: #27ae60;
+        }
+
+        .status-indicator.disconnected {
+            background: #e74c3c;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+
         #status-bar {
             background: #333;
             padding: 10px;
@@ -91,6 +204,72 @@
             max-width: 200px;
         }
 
+        #update-info {
+            position: fixed;
+            bottom: 10px;
+            right: 10px;
+            background: rgba(0, 0, 0, 0.8);
+            padding: 10px;
+            border-radius: 5px;
+            font-size: 12px;
+            max-width: 250px;
+        }
+
+        .update-status {
+            display: flex;
+            align-items: center;
+            margin-bottom: 5px;
+        }
+
+        .update-indicator {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+
+        .update-indicator.stable {
+            background: #27ae60;
+        }
+
+        .update-indicator.testing {
+            background: #f39c12;
+        }
+
+        .update-indicator.updating {
+            background: #3498db;
+            animation: pulse 1s infinite;
+        }
+
+        .update-indicator.error {
+            background: #e74c3c;
+        }
+
+        .channel-badge {
+            display: inline-block;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-size: 10px;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+
+        .channel-badge.stable {
+            background: #27ae60;
+            color: white;
+        }
+
+        .channel-badge.testing {
+            background: #f39c12;
+            color: white;
+        }
+
+        .version-info {
+            font-size: 11px;
+            opacity: 0.8;
+            margin-top: 5px;
+        }
+
         .hidden {
             display: none !important;
         }
@@ -131,6 +310,51 @@
     </style>
 </head>
 <body>
+    <!-- Splash Screen -->
+    <div id="splash-screen">
+        <div class="logo">Member Name Display</div>
+        <div class="subtitle">Raspberry Pi Display Client</div>
+        
+        <div class="connection-info">
+            <h3>Connection Information</h3>
+            <div class="connection-details">
+                <div class="detail-item">
+                    <div class="detail-label">IP Address</div>
+                    <div class="detail-value" id="ip-address">Detecting...</div>
+                </div>
+                <div class="detail-item">
+                    <div class="detail-label">Port</div>
+                    <div class="detail-value" id="port">3000</div>
+                </div>
+                <div class="detail-item">
+                    <div class="detail-label">Status</div>
+                    <div class="detail-value">
+                        <span class="status-indicator connecting" id="status-indicator"></span>
+                        <span id="connection-status-text">Connecting...</span>
+                    </div>
+                </div>
+                <div class="detail-item">
+                    <div class="detail-label">Client ID</div>
+                    <div class="detail-value" id="client-id">Generating...</div>
+                </div>
+            </div>
+            
+            <div class="qr-code-container">
+                <div class="qr-code" id="qr-code">
+                    <div style="color: #000; font-size: 0.8rem; text-align: center;">
+                        QR Code<br>Coming Soon
+                    </div>
+                </div>
+            </div>
+            
+            <div style="font-size: 0.9rem; opacity: 0.8; margin-top: 1rem;">
+                This display will automatically connect to the control panel.<br>
+                No manual configuration required.
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Display Interface -->
     <div id="status-bar" class="disconnected">
         <span id="status-text">Connecting...</span>
         <span class="loading" id="loading-spinner"></span>
@@ -140,6 +364,15 @@
         <div>Connected: <span id="connection-status">No</span></div>
         <div>Last Update: <span id="last-update">Never</span></div>
         <div>Messages: <span id="message-count">0</span></div>
+    </div>
+
+    <div id="update-info">
+        <div class="update-status">
+            <span class="update-indicator" id="update-indicator"></span>
+            <span id="update-status-text">Stable</span>
+        </div>
+        <span class="channel-badge" id="channel-badge">Stable</span>
+        <span class="version-info" id="version-info">Version 1.0.0</span>
     </div>
 
     <div id="display-container">
@@ -159,12 +392,26 @@
                 this.currentName = null;
                 this.currentSlide = null;
                 this.fontColor = '#ffffff';
+                this.clientId = this.generateClientId();
+                
+                // Update system properties
+                this.updateChannel = 'stable';
+                this.currentVersion = '1.0.0';
+                this.updateStatus = 'stable';
+                this.lastUpdateCheck = null;
                 
                 this.initializeElements();
+                this.initializeSplashScreen();
+                this.initializeUpdateSystem();
                 this.connect();
             }
 
+            generateClientId() {
+                return 'pi-' + Math.random().toString(36).substr(2, 9);
+            }
+
             initializeElements() {
+                this.splashScreen = document.getElementById('splash-screen');
                 this.statusBar = document.getElementById('status-bar');
                 this.statusText = document.getElementById('status-text');
                 this.loadingSpinner = document.getElementById('loading-spinner');
@@ -173,26 +420,280 @@
                 this.messageCountElement = document.getElementById('message-count');
                 this.nameDisplay = document.getElementById('name-display');
                 this.slideshowDisplay = document.getElementById('slideshow-display');
+                
+                // Splash screen elements
+                this.ipAddress = document.getElementById('ip-address');
+                this.port = document.getElementById('port');
+                this.statusIndicator = document.getElementById('status-indicator');
+                this.connectionStatusText = document.getElementById('connection-status-text');
+                this.clientIdElement = document.getElementById('client-id');
+                
+                // Update system elements
+                this.updateIndicator = document.getElementById('update-indicator');
+                this.updateStatusText = document.getElementById('update-status-text');
+                this.channelBadge = document.getElementById('channel-badge');
+                this.versionInfo = document.getElementById('version-info');
+                
+                // Set client ID
+                this.clientIdElement.textContent = this.clientId;
             }
 
-            connect() {
-                try {
-                    console.log('[PiClient] Attempting to connect to server...');
-                    this.updateStatus('Connecting...', 'disconnected');
-                    
-                    this.socket = io({
-                        transports: ['websocket', 'polling'],
-                        timeout: 5000,
-                        reconnection: true,
-                        reconnectionAttempts: this.maxReconnectAttempts,
-                        reconnectionDelay: this.reconnectDelay
-                    });
+            initializeSplashScreen() {
+                // Get IP address
+                this.getLocalIPAddress();
+                
+                // Start automatic discovery
+                this.startAutoDiscovery();
+                
+                // Hide splash screen after 5 seconds if connected
+                setTimeout(() => {
+                    if (this.isConnected) {
+                        this.hideSplashScreen();
+                    }
+                }, 5000);
+            }
 
-                    this.setupSocketEventHandlers();
+            initializeUpdateSystem() {
+                // Load update system information
+                this.loadUpdateInfo();
+                
+                // Check for updates periodically (every 6 hours)
+                setInterval(() => {
+                    this.checkForUpdates();
+                }, 6 * 60 * 60 * 1000);
+                
+                // Initial update check after 30 seconds
+                setTimeout(() => {
+                    this.checkForUpdates();
+                }, 30000);
+            }
+
+            async loadUpdateInfo() {
+                try {
+                    // Try to read channel file
+                    const channelResponse = await fetch('http://localhost:3001/update-channel');
+                    if (channelResponse.ok) {
+                        this.updateChannel = await channelResponse.text();
+                    }
+                    
+                    // Try to read version file
+                    const versionResponse = await fetch('http://localhost:3001/client-version');
+                    if (versionResponse.ok) {
+                        this.currentVersion = await versionResponse.text();
+                    }
+                    
+                    // Update display
+                    this.updateUpdateDisplay();
+                    
                 } catch (error) {
-                    console.error('[PiClient] Connection error:', error);
-                    this.handleConnectionError();
+                    console.log('[PiClient] Could not load update info:', error);
+                    // Use defaults
+                    this.updateUpdateDisplay();
                 }
+            }
+
+            async checkForUpdates() {
+                try {
+                    console.log('[PiClient] Checking for updates...');
+                    this.updateUpdateStatus('updating');
+                    
+                    const response = await fetch('http://localhost:3001/check-updates');
+                    if (response.ok) {
+                        const data = await response.json();
+                        
+                        if (data.updateAvailable) {
+                            console.log('[PiClient] Update available:', data.latestVersion);
+                            this.updateUpdateStatus('updating');
+                            
+                            // Trigger update
+                            await this.performUpdate();
+                        } else {
+                            console.log('[PiClient] No updates available');
+                            this.updateUpdateStatus(this.updateChannel);
+                        }
+                        
+                        this.lastUpdateCheck = new Date();
+                    }
+                } catch (error) {
+                    console.error('[PiClient] Update check failed:', error);
+                    this.updateUpdateStatus('error');
+                }
+            }
+
+            async performUpdate() {
+                try {
+                    console.log('[PiClient] Performing update...');
+                    
+                    const response = await fetch('http://localhost:3001/perform-update', { method: 'POST' });
+                    if (response.ok) {
+                        const data = await response.json();
+                        
+                        if (data.success) {
+                            console.log('[PiClient] Update successful:', data.newVersion);
+                            this.currentVersion = data.newVersion;
+                            this.updateUpdateStatus(this.updateChannel);
+                            
+                            // Reload page after 3 seconds to apply update
+                            setTimeout(() => {
+                                window.location.reload();
+                            }, 3000);
+                        } else {
+                            console.error('[PiClient] Update failed:', data.error);
+                            this.updateUpdateStatus('error');
+                        }
+                    }
+                } catch (error) {
+                    console.error('[PiClient] Update failed:', error);
+                    this.updateUpdateStatus('error');
+                }
+            }
+
+            updateUpdateStatus(status) {
+                this.updateStatus = status;
+                this.updateUpdateDisplay();
+            }
+
+            updateUpdateDisplay() {
+                // Update indicator
+                this.updateIndicator.className = `update-indicator ${this.updateStatus}`;
+                
+                // Update status text
+                let statusText = this.updateChannel.charAt(0).toUpperCase() + this.updateChannel.slice(1);
+                if (this.updateStatus === 'updating') {
+                    statusText = 'Updating...';
+                } else if (this.updateStatus === 'error') {
+                    statusText = 'Update Error';
+                }
+                this.updateStatusText.textContent = statusText;
+                
+                // Update channel badge
+                this.channelBadge.textContent = this.updateChannel;
+                this.channelBadge.className = `channel-badge ${this.updateChannel}`;
+                
+                // Update version info
+                this.versionInfo.textContent = `Version ${this.currentVersion}`;
+            }
+
+            async getLocalIPAddress() {
+                try {
+                    const response = await fetch('http://localhost:3001/connect-info');
+                    const data = await response.json();
+                    this.ipAddress.textContent = data.ipAddress || 'Unknown';
+                    this.port.textContent = data.port || '3000';
+                } catch (error) {
+                    console.error('[PiClient] Failed to get IP address:', error);
+                    this.ipAddress.textContent = 'Unknown';
+                }
+            }
+
+            startAutoDiscovery() {
+                console.log('[PiClient] Starting automatic control panel discovery...');
+                this.updateSplashStatus('Discovering Control Panel...', 'connecting');
+                
+                // Try multiple discovery methods
+                this.discoverControlPanel();
+                
+                // Retry discovery every 10 seconds if not connected
+                this.discoveryInterval = setInterval(() => {
+                    if (!this.isConnected) {
+                        this.discoverControlPanel();
+                    } else {
+                        clearInterval(this.discoveryInterval);
+                    }
+                }, 10000);
+            }
+
+            async discoverControlPanel() {
+                try {
+                    // Method 1: Try common hostnames
+                    const hostnames = [
+                        'member-name-display.local',
+                        'control-panel.local',
+                        'display-server.local',
+                        'localhost'
+                    ];
+
+                    for (const hostname of hostnames) {
+                        if (await this.testConnection(`http://${hostname}:3000`)) {
+                            console.log(`[PiClient] Found control panel at ${hostname}:3000`);
+                            this.connectToControlPanel(`http://${hostname}:3000`);
+                            return;
+                        }
+                    }
+
+                    // Method 2: Scan local network range
+                    await this.scanLocalNetwork();
+
+                } catch (error) {
+                    console.error('[PiClient] Discovery error:', error);
+                }
+            }
+
+            async scanLocalNetwork() {
+                const localIP = this.ipAddress.textContent;
+                if (localIP === 'Unknown') return;
+
+                const baseIP = localIP.substring(0, localIP.lastIndexOf('.'));
+                console.log(`[PiClient] Scanning network range ${baseIP}.0/24`);
+
+                // Scan first 50 IPs in parallel
+                const promises = [];
+                for (let i = 1; i <= 50; i++) {
+                    const testIP = `${baseIP}.${i}`;
+                    promises.push(this.testConnection(`http://${testIP}:3000`).then(found => {
+                        if (found) {
+                            console.log(`[PiClient] Found control panel at ${testIP}:3000`);
+                            this.connectToControlPanel(`http://${testIP}:3000`);
+                            return true;
+                        }
+                        return false;
+                    }));
+                }
+
+                const results = await Promise.all(promises);
+                if (!results.some(result => result)) {
+                    console.log('[PiClient] No control panel found on network');
+                    this.updateSplashStatus('No Control Panel Found', 'disconnected');
+                }
+            }
+
+            async testConnection(url) {
+                try {
+                    const response = await fetch(`${url}/discovery`, {
+                        method: 'GET',
+                        timeout: 2000
+                    });
+                    
+                    if (response.ok) {
+                        const data = await response.json();
+                        return data.service === 'MemberNameDisplay';
+                    }
+                } catch (error) {
+                    // Silently ignore connection errors
+                }
+                return false;
+            }
+
+            connectToControlPanel(serverUrl) {
+                console.log(`[PiClient] Connecting to control panel at ${serverUrl}`);
+                this.updateSplashStatus('Connecting to Control Panel...', 'connecting');
+                
+                // Update the socket connection to use the discovered server
+                if (this.socket) {
+                    this.socket.disconnect();
+                }
+
+                // Extract hostname from URL
+                const url = new URL(serverUrl);
+                this.socket = io(serverUrl, {
+                    transports: ['websocket', 'polling'],
+                    timeout: 5000,
+                    reconnection: true,
+                    reconnectionAttempts: this.maxReconnectAttempts,
+                    reconnectionDelay: this.reconnectDelay
+                });
+
+                this.setupSocketEventHandlers();
             }
 
             setupSocketEventHandlers() {
@@ -201,13 +702,28 @@
                     this.isConnected = true;
                     this.reconnectAttempts = 0;
                     this.updateStatus('Connected', 'connected');
-                    this.socket.emit('client-ready', { clientType: 'pi-display' });
+                    this.updateSplashStatus('Connected', 'connected');
+                    this.connectionStatus.textContent = 'Yes';
+                    
+                    // Send client information
+                    this.socket.emit('client-ready', {
+                        clientId: this.clientId,
+                        type: 'pi-display',
+                        capabilities: ['name-display', 'slideshow', 'font-color']
+                    });
+                    
+                    // Hide splash screen after successful connection
+                    setTimeout(() => {
+                        this.hideSplashScreen();
+                    }, 2000);
                 });
 
                 this.socket.on('disconnect', () => {
                     console.log('[PiClient] Disconnected from server');
                     this.isConnected = false;
                     this.updateStatus('Disconnected', 'disconnected');
+                    this.updateSplashStatus('Disconnected', 'disconnected');
+                    this.connectionStatus.textContent = 'No';
                 });
 
                 this.socket.on('connect_error', (error) => {
@@ -215,111 +731,82 @@
                     this.handleConnectionError();
                 });
 
-                this.socket.on('server-ready', (data) => {
-                    console.log('[PiClient] Server ready:', data);
-                    this.updateStatus('Ready', 'connected');
+                this.socket.on('name-display', (data) => {
+                    console.log('[PiClient] Received name display:', data);
+                    this.displayName(data);
+                    this.messageCount++;
+                    this.messageCountElement.textContent = this.messageCount;
+                    this.lastUpdate.textContent = new Date().toLocaleTimeString();
                 });
 
-                this.socket.on('name-update', (message) => {
-                    this.handleNameUpdate(message);
+                this.socket.on('name-clear', () => {
+                    console.log('[PiClient] Received name clear');
+                    this.clearName();
+                    this.messageCount++;
+                    this.messageCountElement.textContent = this.messageCount;
+                    this.lastUpdate.textContent = new Date().toLocaleTimeString();
                 });
 
-                this.socket.on('slideshow-update', (message) => {
-                    this.handleSlideshowUpdate(message);
+                this.socket.on('slideshow-update', (data) => {
+                    console.log('[PiClient] Received slideshow update:', data);
+                    this.updateSlideshow(data.slideIndex);
+                    this.messageCount++;
+                    this.messageCountElement.textContent = this.messageCount;
+                    this.lastUpdate.textContent = new Date().toLocaleTimeString();
                 });
 
-                this.socket.on('display-update', (message) => {
-                    this.handleDisplayUpdate(message);
+                this.socket.on('font-color-update', (data) => {
+                    console.log('[PiClient] Received font color update:', data);
+                    this.updateFontColor(data.color);
+                    this.messageCount++;
+                    this.messageCountElement.textContent = this.messageCount;
+                    this.lastUpdate.textContent = new Date().toLocaleTimeString();
                 });
+            }
 
-                this.socket.on('state-update', (message) => {
-                    this.handleStateUpdate(message);
-                });
+            updateStatus(text, status) {
+                this.statusText.textContent = text;
+                this.statusBar.className = `status-bar ${status}`;
+            }
+
+            updateSplashStatus(text, status) {
+                this.connectionStatusText.textContent = text;
+                this.statusIndicator.className = `status-indicator ${status}`;
             }
 
             handleConnectionError() {
-                this.reconnectAttempts++;
-                if (this.reconnectAttempts <= this.maxReconnectAttempts) {
-                    this.updateStatus(`Reconnecting... (${this.reconnectAttempts}/${this.maxReconnectAttempts})`, 'disconnected');
-                    setTimeout(() => this.connect(), this.reconnectDelay);
-                } else {
-                    this.updateStatus('Connection failed', 'disconnected');
-                }
-            }
-
-            handleNameUpdate(message) {
-                this.messageCount++;
-                this.updateMessageCount();
-                this.updateLastUpdate();
-
-                console.log('[PiClient] Name update received:', message);
-
-                if (message.type === 'display-name') {
-                    this.displayName(message.data);
-                } else if (message.type === 'clear-name') {
-                    this.clearName();
-                }
-            }
-
-            handleSlideshowUpdate(message) {
-                this.messageCount++;
-                this.updateMessageCount();
-                this.updateLastUpdate();
-
-                console.log('[PiClient] Slideshow update received:', message);
-                this.currentSlide = message.data.slideIndex;
+                this.updateStatus('Connection Failed', 'disconnected');
+                this.updateSplashStatus('Connection Failed', 'disconnected');
+                this.connectionStatus.textContent = 'No';
                 
-                // For now, we'll just log the slide change
-                // In a full implementation, you might want to display slideshow images
-                console.log(`[PiClient] Current slide: ${this.currentSlide}`);
-            }
-
-            handleDisplayUpdate(message) {
-                this.messageCount++;
-                this.updateMessageCount();
-                this.updateLastUpdate();
-
-                console.log('[PiClient] Display update received:', message);
-
-                if (message.type === 'font-color-update') {
-                    this.fontColor = message.data.fontColor;
-                    this.updateFontColor();
-                }
-            }
-
-            handleStateUpdate(message) {
-                console.log('[PiClient] State update received:', message);
-                // Handle initial state from server
-                if (message.data.currentName) {
-                    this.displayName(message.data.currentName);
-                }
-                if (message.data.fontColor) {
-                    this.fontColor = message.data.fontColor;
-                    this.updateFontColor();
+                if (this.reconnectAttempts < this.maxReconnectAttempts) {
+                    this.reconnectAttempts++;
+                    console.log(`[PiClient] Reconnection attempt ${this.reconnectAttempts}/${this.maxReconnectAttempts}`);
+                    setTimeout(() => {
+                        this.connect();
+                    }, this.reconnectDelay);
+                } else {
+                    console.error('[PiClient] Max reconnection attempts reached');
+                    this.updateStatus('Connection Failed - Max Attempts', 'disconnected');
+                    this.updateSplashStatus('Connection Failed - Max Attempts', 'disconnected');
                 }
             }
 
             displayName(nameData) {
                 this.currentName = nameData;
-                let html = '';
-                if (typeof nameData === 'object' && nameData !== null) {
-                    if (nameData.firstLine || nameData.secondLine) {
-                        html = `<div>${nameData.firstLine || ''}</div><div>${nameData.secondLine || ''}</div>`;
-                    } else if (nameData.name) {
-                        html = nameData.name;
-                    } else {
-                        html = JSON.stringify(nameData);
-                    }
-                } else {
-                    html = nameData;
+                this.slideshowDisplay.classList.add('hidden');
+                
+                let displayText = '';
+                if (nameData.firstLine) {
+                    displayText += `<div style="color: ${this.fontColor};">${nameData.firstLine}</div>`;
                 }
-                this.nameDisplay.innerHTML = html;
-                this.nameDisplay.style.color = this.fontColor;
+                if (nameData.secondLine) {
+                    displayText += `<div style="color: ${this.fontColor};">${nameData.secondLine}</div>`;
+                }
+                
+                this.nameDisplay.innerHTML = displayText;
                 this.nameDisplay.classList.remove('hidden');
                 this.nameDisplay.classList.add('fade-in');
-                // Hide slideshow when showing name
-                this.slideshowDisplay.classList.add('hidden');
-                console.log('[PiClient] Displaying name:', nameData);
             }
 
             clearName() {
@@ -329,95 +816,35 @@
                     this.nameDisplay.classList.add('hidden');
                     this.nameDisplay.classList.remove('fade-out');
                 }, 500);
-                
-                console.log('[PiClient] Name cleared');
             }
 
-            updateFontColor() {
+            updateSlideshow(slideIndex) {
+                this.currentSlide = slideIndex;
+                // For now, we'll show a placeholder for slideshow
+                // In the future, this will load actual slideshow images
+                this.nameDisplay.classList.add('hidden');
+                this.slideshowDisplay.classList.remove('hidden');
+                this.slideshowDisplay.classList.add('fade-in');
+            }
+
+            updateFontColor(color) {
+                this.fontColor = color;
                 if (this.currentName) {
-                    this.nameDisplay.style.color = this.fontColor;
+                    this.displayName(this.currentName);
                 }
             }
 
-            updateStatus(text, className) {
-                this.statusText.textContent = text;
-                this.statusBar.className = className;
-                this.connectionStatus.textContent = this.isConnected ? 'Yes' : 'No';
-                
-                if (this.isConnected) {
-                    this.loadingSpinner.style.display = 'none';
-                } else {
-                    this.loadingSpinner.style.display = 'inline-block';
-                }
-            }
-
-            updateMessageCount() {
-                this.messageCountElement.textContent = this.messageCount;
-            }
-
-            updateLastUpdate() {
-                this.lastUpdate.textContent = new Date().toLocaleTimeString();
-            }
-
-            // Send status to server
-            sendStatus() {
-                if (this.isConnected) {
-                    this.socket.emit('client-status', {
-                        connected: this.isConnected,
-                        messageCount: this.messageCount,
-                        currentName: this.currentName,
-                        currentSlide: this.currentSlide,
-                        fontColor: this.fontColor,
-                        timestamp: new Date().toISOString()
-                    });
-                }
+            hideSplashScreen() {
+                this.splashScreen.classList.add('hidden');
+                setTimeout(() => {
+                    this.splashScreen.style.display = 'none';
+                }, 500);
             }
         }
 
-        // Initialize the client when page loads
+        // Initialize the Pi display client when the page loads
         document.addEventListener('DOMContentLoaded', () => {
-            console.log('[PiClient] Initializing Pi Display Client...');
-            
-            // Test font loading
-            const testFont = new FontFace('GothamRnd', 'url(/fonts/GothamRnd-Bold.otf)');
-            testFont.load().then(() => {
-                console.log('[PiClient] GothamRnd font loaded successfully');
-                document.fonts.add(testFont);
-            }).catch((error) => {
-                console.error('[PiClient] Failed to load GothamRnd font:', error);
-                console.log('[PiClient] Falling back to Arial font');
-            });
-            
-            window.piClient = new PiDisplayClient();
-            
-            // Send status updates every 30 seconds
-            setInterval(() => {
-                if (window.piClient) {
-                    window.piClient.sendStatus();
-                }
-            }, 30000);
-        });
-
-        // Handle page visibility changes
-        document.addEventListener('visibilitychange', () => {
-            if (document.hidden) {
-                console.log('[PiClient] Page hidden');
-            } else {
-                console.log('[PiClient] Page visible');
-                // Reconnect if needed when page becomes visible
-                if (window.piClient && !window.piClient.isConnected) {
-                    window.piClient.connect();
-                }
-            }
-        });
-
-        // Handle window focus/blur
-        window.addEventListener('focus', () => {
-            console.log('[PiClient] Window focused');
-        });
-
-        window.addEventListener('blur', () => {
-            console.log('[PiClient] Window blurred');
+            new PiDisplayClient();
         });
     </script>
 </body>

@@ -514,74 +514,71 @@ class WebServer {
       }
     });
 
-    // Serve status endpoint
-    console.log('[WebServer] Setting up route: /status');
+    // Setup Express routes
+    console.log('[WebServer] Setting up Express routes...');
+    
+    // Status endpoint for Pi displays to get connection info
     this.app.get('/status', (req, res) => {
       console.log('[WebServer] Serving status route');
       res.json({
         status: 'running',
+        timestamp: new Date().toISOString(),
         connectedClients: this.connectedClients.size,
-        uptime: process.uptime(),
         serverAddress: this.getServerAddress()
       });
     });
 
-    // Serve connection info for Pi displays
-    console.log('[WebServer] Setting up route: /connect-info');
+    // Connection info endpoint for Pi displays
     this.app.get('/connect-info', (req, res) => {
       console.log('[WebServer] Serving connect-info route');
+      const serverInfo = this.getServerAddress();
       res.json({
-        serverAddress: this.getServerAddress(),
+        ipAddress: serverInfo.ipAddress,
         port: this.port,
-        instructions: 'Connect to this address from your Pi display'
+        serverUrl: serverInfo.url,
+        timestamp: new Date().toISOString()
       });
     });
 
-    // Serve health check endpoint
-    console.log('[WebServer] Setting up route: /health');
+    // Health check endpoint
     this.app.get('/health', (req, res) => {
       console.log('[WebServer] Serving health route');
-      res.json({ 
-        status: 'healthy', 
-        timestamp: new Date().toISOString(),
-        clients: this.connectedClients.size 
+      res.json({
+        status: 'healthy',
+        uptime: process.uptime(),
+        memory: process.memoryUsage(),
+        connectedClients: this.connectedClients.size
       });
     });
 
-    // Test font accessibility
-    console.log('[WebServer] Setting up route: /test-font');
-    this.app.get('/test-font', (req, res) => {
-      const filename = 'GothamRnd-Bold.otf';
-      
-      // Try multiple possible paths for the font file
-      const possiblePaths = [
-        path.join(__dirname, 'assets', 'fonts', filename), // webpack build path
-        path.join(__dirname, '..', 'src', 'assets', 'fonts', filename), // source path
-        path.join(process.cwd(), 'src', 'assets', 'fonts', filename), // absolute source path
-      ];
-      
-      let fontPath = null;
-      let fontExists = false;
-      let fontStats = null;
-      
-      for (const testPath of possiblePaths) {
-        if (fs.existsSync(testPath)) {
-          fontPath = testPath;
-          fontExists = true;
-          fontStats = fs.statSync(testPath);
-          break;
-        }
-      }
-      
+    // Discovery endpoint for network scanning
+    this.app.get('/discovery', (req, res) => {
+      console.log('[WebServer] Serving discovery route');
       res.json({
-        fontExists,
-        fontPath,
-        fontSize: fontStats ? fontStats.size : null,
-        fontModified: fontStats ? fontStats.mtime : null,
-        searchedPaths: possiblePaths,
-        currentDir: __dirname,
-        cwd: process.cwd(),
-        message: fontExists ? 'Font file is accessible' : 'Font file not found in any expected location'
+        service: 'MemberNameDisplay',
+        version: '1.4.0',
+        type: 'display-server',
+        capabilities: ['name-display', 'slideshow', 'font-color'],
+        serverInfo: this.getServerAddress(),
+        connectedClients: Array.from(this.connectedClients).map(clientId => ({
+          id: clientId,
+          type: 'pi-display',
+          connectedAt: new Date().toISOString()
+        }))
+      });
+    });
+
+    // Font test endpoint
+    this.app.get('/test-font', (req, res) => {
+      console.log('[WebServer] Serving test-font route');
+      res.json({
+        fonts: {
+          gothamRnd: {
+            available: true,
+            path: '/fonts/GothamRnd-Bold.otf',
+            fallback: 'Arial'
+          }
+        }
       });
     });
 
@@ -593,6 +590,8 @@ class WebServer {
         availableRoutes: ['/', '/status', '/connect-info', '/health', '/test-font', '/fonts/*']
       });
     });
+
+    console.log('[WebServer] Routes setup complete');
   }
 
   // Setup Socket.io event handlers
@@ -625,7 +624,73 @@ class WebServer {
 
   // Setup Express routes
   setupRoutes() {
-    // Additional routes can be added here if needed
+    console.log('[WebServer] Setting up Express routes...');
+    
+    // Status endpoint for Pi displays to get connection info
+    this.app.get('/status', (req, res) => {
+      console.log('[WebServer] Serving status route');
+      res.json({
+        status: 'running',
+        timestamp: new Date().toISOString(),
+        connectedClients: this.connectedClients.size,
+        serverAddress: this.getServerAddress()
+      });
+    });
+
+    // Connection info endpoint for Pi displays
+    this.app.get('/connect-info', (req, res) => {
+      console.log('[WebServer] Serving connect-info route');
+      const serverInfo = this.getServerAddress();
+      res.json({
+        ipAddress: serverInfo.ipAddress,
+        port: this.port,
+        serverUrl: serverInfo.url,
+        timestamp: new Date().toISOString()
+      });
+    });
+
+    // Health check endpoint
+    this.app.get('/health', (req, res) => {
+      console.log('[WebServer] Serving health route');
+      res.json({
+        status: 'healthy',
+        uptime: process.uptime(),
+        memory: process.memoryUsage(),
+        connectedClients: this.connectedClients.size
+      });
+    });
+
+    // Discovery endpoint for network scanning
+    this.app.get('/discovery', (req, res) => {
+      console.log('[WebServer] Serving discovery route');
+      res.json({
+        service: 'MemberNameDisplay',
+        version: '1.4.0',
+        type: 'display-server',
+        capabilities: ['name-display', 'slideshow', 'font-color'],
+        serverInfo: this.getServerAddress(),
+        connectedClients: Array.from(this.connectedClients).map(clientId => ({
+          id: clientId,
+          type: 'pi-display',
+          connectedAt: new Date().toISOString()
+        }))
+      });
+    });
+
+    // Font test endpoint
+    this.app.get('/test-font', (req, res) => {
+      console.log('[WebServer] Serving test-font route');
+      res.json({
+        fonts: {
+          gothamRnd: {
+            available: true,
+            path: '/fonts/GothamRnd-Bold.otf',
+            fallback: 'Arial'
+          }
+        }
+      });
+    });
+
     console.log('[WebServer] Routes setup complete');
   }
 
@@ -821,7 +886,10 @@ class WebServer {
     if (validInterfaces.length > 0) {
       const bestInterface = validInterfaces[0];
       console.log(`[WebServer] Selected interface: ${bestInterface.name} (${bestInterface.address})`);
-      return `http://${bestInterface.address}:${this.port}`;
+      return {
+        ipAddress: bestInterface.address,
+        url: `http://${bestInterface.address}:${this.port}`
+      };
     }
     
     // Fallback: try to find any non-internal IPv4 interface
@@ -829,14 +897,20 @@ class WebServer {
       for (const iface of interfaces[name]) {
         if (iface.family === 'IPv4' && !iface.internal && !iface.address.startsWith('127.')) {
           console.log(`[WebServer] Fallback interface: ${name} (${iface.address})`);
-          return `http://${iface.address}:${this.port}`;
+          return {
+            ipAddress: iface.address,
+            url: `http://${iface.address}:${this.port}`
+          };
         }
       }
     }
     
     // Final fallback to localhost
     console.log('[WebServer] Using localhost as fallback');
-    return `http://localhost:${this.port}`;
+    return {
+      ipAddress: 'localhost',
+      url: `http://localhost:${this.port}`
+    };
   }
 
   // Get priority for network interface selection
