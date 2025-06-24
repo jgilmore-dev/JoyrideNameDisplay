@@ -6,7 +6,8 @@ function getBannerNumber() {
   return parseInt(params.get('banner') || '1', 10);
 }
 
-const Banner = () => {
+const Banner = (props) => {
+  const images = props.images || [];
   const [displayName, setDisplayName] = useState(null);
   const [slideshowImages, setSlideshowImages] = useState([]);
   const [currentSlideSrc, setCurrentSlideSrc] = useState('');

@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-const { ipcRenderer } = window.require('electron');
 
 const PiClientManager = () => {
   const [piClients, setPiClients] = useState([]);
@@ -43,7 +42,7 @@ const PiClientManager = () => {
 
   const fetchPiSystemStatus = useCallback(async () => {
     try {
-      const status = await ipcRenderer.invoke('get-pi-system-status');
+      const status = await window.electronAPI.invoke('get-pi-system-status');
       setPiSystemStatus(status);
     } catch (error) {
       console.error('Failed to fetch Pi system status:', error);
@@ -58,7 +57,7 @@ const PiClientManager = () => {
   const handlePiSystemAction = useCallback(async (action) => {
     setIsLoading(true);
     try {
-      const result = await ipcRenderer.invoke(`${action}-pi-system`);
+      const result = await window.electronAPI.invoke(`${action}-pi-system`);
       showMessage(result.message);
       fetchPiSystemStatus();
     } catch (error) {
@@ -77,7 +76,7 @@ const PiClientManager = () => {
   const scanForPiClients = useCallback(async () => {
     setIsScanning(true);
     try {
-      const clients = await ipcRenderer.invoke('scan-pi-clients');
+      const clients = await window.electronAPI.invoke('scan-pi-clients');
       setDiscoveredClients(clients);
       setPiClients(clients);
     } catch (error) {
@@ -92,7 +91,7 @@ const PiClientManager = () => {
   const getClientDetails = useCallback(async (client) => {
     setIsLoading(true);
     try {
-      const details = await ipcRenderer.invoke('get-pi-client-details', client);
+      const details = await window.electronAPI.invoke('get-pi-client-details', client);
       setClientDetails(details);
       setSelectedClient(client);
     } catch (error) {

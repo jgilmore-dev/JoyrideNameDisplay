@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-const { ipcRenderer } = window.require('electron');
 
 const QueueManager = ({ enabledBanners = [] }) => {
   const [queues, setQueues] = useState({});
@@ -18,7 +17,7 @@ const QueueManager = ({ enabledBanners = [] }) => {
 
   const fetchQueueData = async () => {
     try {
-      const allQueues = await ipcRenderer.invoke('get-all-queues');
+      const allQueues = await window.electronAPI.invoke('get-all-queues');
       setQueues(allQueues);
       
       // Extract current displays
@@ -40,7 +39,7 @@ const QueueManager = ({ enabledBanners = [] }) => {
   const handleDisplayNext = async (bannerId) => {
     setLoading(true);
     try {
-      const result = await ipcRenderer.invoke('display-next-from-queue', bannerId);
+      const result = await window.electronAPI.invoke('display-next-from-queue', bannerId);
       if (result) {
         showMessage(`Displayed ${result.nameData.firstLine} ${result.nameData.secondLine} on Banner ${bannerId}`);
       } else {
@@ -58,7 +57,7 @@ const QueueManager = ({ enabledBanners = [] }) => {
   const handleClearCurrent = async (bannerId) => {
     setLoading(true);
     try {
-      const result = await ipcRenderer.invoke('clear-current-display', bannerId);
+      const result = await window.electronAPI.invoke('clear-current-display', bannerId);
       showMessage(result.message);
       fetchQueueData();
     } catch (error) {
@@ -72,7 +71,7 @@ const QueueManager = ({ enabledBanners = [] }) => {
   const handleRemoveFromQueue = async (bannerId, memberId) => {
     setLoading(true);
     try {
-      const result = await ipcRenderer.invoke('remove-from-queue', { bannerId, memberId });
+      const result = await window.electronAPI.invoke('remove-from-queue', { bannerId, memberId });
       showMessage(result.message);
       fetchQueueData();
     } catch (error) {
@@ -86,7 +85,7 @@ const QueueManager = ({ enabledBanners = [] }) => {
   const handleMoveUp = async (bannerId, memberId) => {
     setLoading(true);
     try {
-      const result = await ipcRenderer.invoke('move-up-in-queue', { bannerId, memberId });
+      const result = await window.electronAPI.invoke('move-up-in-queue', { bannerId, memberId });
       showMessage(result.message);
       fetchQueueData();
     } catch (error) {
@@ -100,7 +99,7 @@ const QueueManager = ({ enabledBanners = [] }) => {
   const handleMoveDown = async (bannerId, memberId) => {
     setLoading(true);
     try {
-      const result = await ipcRenderer.invoke('move-down-in-queue', { bannerId, memberId });
+      const result = await window.electronAPI.invoke('move-down-in-queue', { bannerId, memberId });
       showMessage(result.message);
       fetchQueueData();
     } catch (error) {
@@ -114,7 +113,7 @@ const QueueManager = ({ enabledBanners = [] }) => {
   const handleMoveToBanner = async (fromBannerId, toBannerId, memberId) => {
     setLoading(true);
     try {
-      const result = await ipcRenderer.invoke('move-to-banner', { fromBannerId, toBannerId, memberId });
+      const result = await window.electronAPI.invoke('move-to-banner', { fromBannerId, toBannerId, memberId });
       showMessage(result.message);
       fetchQueueData();
     } catch (error) {
@@ -132,7 +131,7 @@ const QueueManager = ({ enabledBanners = [] }) => {
     
     setLoading(true);
     try {
-      const result = await ipcRenderer.invoke('clear-queue', bannerId);
+      const result = await window.electronAPI.invoke('clear-queue', bannerId);
       showMessage(result.message);
       fetchQueueData();
     } catch (error) {
@@ -150,7 +149,7 @@ const QueueManager = ({ enabledBanners = [] }) => {
     
     setLoading(true);
     try {
-      const result = await ipcRenderer.invoke('clear-all-queues');
+      const result = await window.electronAPI.invoke('clear-all-queues');
       showMessage(result.message);
       fetchQueueData();
     } catch (error) {

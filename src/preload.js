@@ -19,7 +19,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
       channels.slideshowUpdated,
       channels.setSlide,
       channels.setFontColor,
-      channels.updateStatus
+      channels.updateStatus,
+      'update-status-changed'
     ];
     if (validChannels.includes(channel)) {
       // Deliberately strip event as it includes `sender`
@@ -35,7 +36,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
       channels.setBannerNumberVisibility,
       channels.slideshowUpdated,
       channels.setSlide,
-      channels.setFontColor
+      channels.setFontColor,
+      'update-status-changed'
     ];
     if (validChannels.includes(channel)) {
       ipcRenderer.removeAllListeners(channel);
@@ -76,6 +78,38 @@ contextBridge.exposeInMainWorld('electronAPI', {
       channels.downloadUpdate,
       channels.installUpdate,
       channels.getUpdateStatus,
+      // Additional channels used by components
+      'get-update-status',
+      'get-update-channel',
+      'set-update-channel',
+      'check-for-updates',
+      'download-update',
+      'install-update',
+      'open-github-releases',
+      'get-all-queues',
+      'display-next-from-queue',
+      'clear-current-display',
+      'remove-from-queue',
+      'move-up-in-queue',
+      'move-down-in-queue',
+      'move-to-banner',
+      'clear-queue',
+      'clear-all-queues',
+      'get-pi-system-status',
+      'enable-pi-system',
+      'disable-pi-system',
+      'restart-pi-system',
+      'scan-pi-clients',
+      'get-pi-client-details',
+      'add-to-queue',
+      'get-slideshow-status',
+      'load-csv',
+      'banner-display',
+      'banner-clear',
+      'import-images',
+      'clear-slideshow-cache',
+      'apply-display-settings',
+      'set-slideshow-interval'
     ];
     if (validChannels.includes(channel)) {
       return ipcRenderer.invoke(channel, ...args);

@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-const { ipcRenderer } = window.require('electron');
 
 const UpdateManager = () => {
   const [updateStatus, setUpdateStatus] = useState({
@@ -24,7 +23,7 @@ const UpdateManager = () => {
     getChannelInfo();
 
     // Listen for update status changes
-    const handleUpdateStatusChange = (event, data) => {
+    const handleUpdateStatusChange = (data) => {
       setUpdateStatus(prev => ({
         ...prev,
         ...data.data,
@@ -33,16 +32,16 @@ const UpdateManager = () => {
       setError(null);
     };
 
-    ipcRenderer.on('update-status-changed', handleUpdateStatusChange);
+    window.electronAPI.on('update-status-changed', handleUpdateStatusChange);
 
     return () => {
-      ipcRenderer.removeListener('update-status-changed', handleUpdateStatusChange);
+      window.electronAPI.removeAllListeners('update-status-changed');
     };
   }, []);
 
   const getUpdateStatus = async () => {
     try {
-      const status = await ipcRenderer.invoke('get-update-status');
+      const status = await window.electronAPI.invoke('get-update-status');
       setUpdateStatus(status);
     } catch (error) {
       console.error('Failed to get update status:', error);
@@ -52,7 +51,7 @@ const UpdateManager = () => {
 
   const getChannelInfo = async () => {
     try {
-      const info = await ipcRenderer.invoke('get-update-channel');
+      const info = await window.electronAPI.invoke('get-update-channel');
       setChannelInfo(info);
     } catch (error) {
       console.error('Failed to get channel info:', error);
@@ -64,7 +63,7 @@ const UpdateManager = () => {
     setError(null);
     
     try {
-      const result = await ipcRenderer.invoke('set-update-channel', newChannel);
+      const result = await window.electronAPI.invoke('set-update-channel', newChannel);
       if (result.success) {
         setChannelInfo(prev => ({ ...prev, channel: newChannel }));
         // Trigger an immediate update check
@@ -85,7 +84,7 @@ const UpdateManager = () => {
     setError(null);
     
     try {
-      const result = await ipcRenderer.invoke('check-for-updates');
+      const result = await window.electronAPI.invoke('check-for-updates');
       if (!result.success) {
         setError(result.error || 'Failed to check for updates');
       }
@@ -101,7 +100,7 @@ const UpdateManager = () => {
     setError(null);
     
     try {
-      const result = await ipcRenderer.invoke('download-update');
+      const result = await window.electronAPI.invoke('download-update');
       if (!result.success) {
         setError(result.error || 'Failed to download update');
       }
@@ -115,7 +114,7 @@ const UpdateManager = () => {
     setError(null);
     
     try {
-      const result = await ipcRenderer.invoke('install-update');
+      const result = await window.electronAPI.invoke('install-update');
       if (!result.success) {
         setError(result.error || 'Failed to install update');
       }
@@ -127,7 +126,7 @@ const UpdateManager = () => {
 
   const openGitHubReleases = async () => {
     try {
-      await ipcRenderer.invoke('open-github-releases');
+      await window.electronAPI.invoke('open-github-releases');
     } catch (error) {
       console.error('Failed to open GitHub releases:', error);
     }
