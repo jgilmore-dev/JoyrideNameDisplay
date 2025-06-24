@@ -12,6 +12,33 @@ The integrated channel system provides:
 - **Automatic Updates**: Seamless update management across the entire system
 - **Network Discovery**: Automatic discovery of Pi clients on the network
 
+## Pi System Opt-In Feature
+
+### Overview
+
+The Pi system is now opt-in by default to maximize adaptability and efficiency. When disabled, the application runs with lower resource usage, making it ideal for events that only need local displays.
+
+### Benefits
+
+- **Efficiency**: Lower resource usage when Pi system is not needed
+- **Flexibility**: Easy to enable/disable based on event requirements
+- **Performance**: Faster startup and reduced memory footprint for local-only setups
+- **Scalability**: Can be enabled when network displays are required
+
+### Configuration
+
+The Pi system can be controlled through the control panel interface:
+
+1. **Enable Pi System**: Starts the web server and enables Pi client discovery
+2. **Disable Pi System**: Stops the web server and reduces resource usage
+3. **Restart Pi System**: Restarts the web server with current settings
+
+### Default Behavior
+
+- **Default State**: Pi system is disabled by default
+- **Settings Persistence**: Pi system state is saved and restored on application restart
+- **Automatic Discovery**: When enabled, automatically discovers Pi clients on the network
+
 ## Channel Types
 
 ### Stable Channel (Default)

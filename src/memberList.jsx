@@ -20,9 +20,17 @@ const MemberList = ({ members, onSelectMember, onEditMember, enabledBanners = []
               <td>{formatFirstNames(member)}</td>
               <td className="actions-cell">
                 {enabledBanners.map(bannerId => (
-                  <button key={bannerId} onClick={() => onSelectMember(member, bannerId)}>
-                    To Banner {bannerId}
-                  </button>
+                  <div key={bannerId} className="banner-actions">
+                    <button onClick={() => onSelectMember(member, bannerId)}>
+                      To Banner {bannerId}
+                    </button>
+                    <button 
+                      onClick={() => onSelectMember(member, bannerId, 'queue')}
+                      className="queue-button"
+                    >
+                      Queue for {bannerId}
+                    </button>
+                  </div>
                 ))}
                 <button onClick={() => onEditMember(member)}>Edit</button>
               </td>

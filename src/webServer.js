@@ -290,6 +290,10 @@ class WebServer {
                     this.handleSlideshowUpdate(message);
                 });
 
+                this.socket.on('slideshow-clear', () => {
+                    this.handleSlideshowClear();
+                });
+
                 this.socket.on('display-update', (message) => {
                     this.handleDisplayUpdate(message);
                 });
@@ -331,6 +335,11 @@ class WebServer {
                 console.log('[PiClient] Slideshow update received:', message);
                 this.currentSlide = message.data.slideIndex;
                 console.log(\`[PiClient] Current slide: \${this.currentSlide}\`);
+            }
+
+            handleSlideshowClear() {
+                console.log('[PiClient] Slideshow clear received');
+                this.currentSlide = null;
             }
 
             handleDisplayUpdate(message) {
@@ -734,19 +743,54 @@ class WebServer {
 
   // Stop the web server
   stop() {
-    if (!this.isRunning) {
-      console.log('[WebServer] Server is not running');
-      return;
-    }
+    return new Promise((resolve, reject) => {
+      if (!this.isRunning) {
+        console.log('[WebServer] Server is not running');
+        resolve();
+        return;
+      }
 
-    try {
-      this.server.close(() => {
+      console.log('[WebServer] Stopping web server...');
+      
+      // Cleanup connected clients
+      if (this.io) {
+        this.io.sockets.sockets.forEach((socket) => {
+          socket.disconnect(true);
+        });
+        this.connectedClients.clear();
+      }
+      
+      // Close the server
+      if (this.server) {
+        this.server.close((err) => {
+          if (err) {
+            console.error('[WebServer] Error stopping server:', err);
+            reject(err);
+          } else {
+            console.log('[WebServer] Server stopped successfully');
+            this.isRunning = false;
+            this.server = null;
+            this.io = null;
+            resolve();
+          }
+        });
+        
+        // Force close after 5 seconds if graceful shutdown fails
+        setTimeout(() => {
+          if (this.server) {
+            console.warn('[WebServer] Force closing server after timeout');
+            this.server.destroy();
+            this.isRunning = false;
+            this.server = null;
+            this.io = null;
+            resolve();
+          }
+        }, 5000);
+      } else {
         this.isRunning = false;
-        console.log('[WebServer] Web server stopped');
-      });
-    } catch (error) {
-      console.error('[WebServer] Error stopping server:', error);
-    }
+        resolve();
+      }
+    });
   }
 
   // Broadcast name display to all connected Pi displays
@@ -784,19 +828,18 @@ class WebServer {
 
   // Broadcast slideshow update to all connected Pi displays
   broadcastSlideshowUpdate(slideIndex) {
-    if (!this.isRunning || !this.io) {
-      console.warn('[WebServer] Cannot broadcast - server not running');
-      return;
+    if (this.io && this.isRunning) {
+      this.io.emit('slideshow-update', { slideIndex });
+      console.log(`[WebServer] Broadcasted slideshow update: slide ${slideIndex}`);
     }
+  }
 
-    const message = {
-      type: 'slideshow-update',
-      data: { slideIndex },
-      timestamp: new Date().toISOString()
-    };
-
-    this.io.emit('slideshow-update', message);
-    console.log(`[WebServer] Broadcasted slideshow update to ${this.connectedClients.size} Pi displays: slide ${slideIndex}`);
+  // Broadcast slideshow clear to all connected Pi displays
+  broadcastSlideshowClear() {
+    if (this.io && this.isRunning) {
+      this.io.emit('slideshow-clear');
+      console.log('[WebServer] Broadcasted slideshow clear');
+    }
   }
 
   // Broadcast font color update to all connected Pi displays

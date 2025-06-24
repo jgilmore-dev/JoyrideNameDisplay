@@ -1,182 +1,151 @@
-# Performance Optimizations
+# Performance Optimizations and Resource Management
 
-This document outlines the major performance optimizations implemented in the Member Name Display application.
+## Overview
 
-## Critical Memory Leak Fixes
+This document outlines the comprehensive performance optimizations and resource management improvements implemented across the Member Name Display application to ensure efficiency, safety, and resilience.
 
-### 1. Event Listener Cleanup in Banner Component
-**File**: `src/banner.jsx`
-**Issue**: Event listeners were registered but never cleaned up, causing memory leaks
-**Fix**: 
-- Added proper cleanup function in useEffect
-- Implemented `removeAllListeners` method in preload.js
-- Added cleanup for preload cache and queue
+## Key Improvements
 
-```javascript
-// Before: No cleanup
-useEffect(() => {
-  window.electronAPI.on('display-name', (nameData) => setDisplayName(nameData));
-  // ... more listeners
-}, []);
+### 1. Resource Management
 
-// After: Proper cleanup
-useEffect(() => {
-  // Register listeners
-  window.electronAPI.on('display-name', displayNameHandler);
-  // ... more listeners
-  
-  return () => {
-    // Remove all event listeners to prevent memory leaks
-    window.electronAPI.removeAllListeners('display-name');
-    // ... cleanup all listeners
-  };
-}, []);
-```
+#### Main Process (`src/main.js`)
+- **Centralized Cleanup**: Added `cleanupResources()` function that properly cleans up all resources on app exit
+- **Proper App Lifecycle**: Added handlers for `before-quit`, `uncaughtException`, and `unhandledRejection` events
+- **Memory Leak Prevention**: Fixed duplicate variable declarations and improved variable scoping
+- **Graceful Shutdown**: Implemented proper cleanup sequence for all components
 
-### 2. Window Management Memory Leaks
-**File**: `src/bannerManager.js`
-**Issue**: Banner windows weren't properly cleaned up when destroyed
-**Fix**: Added window event listeners for proper cleanup
+#### Banner Manager (`src/bannerManager.js`)
+- **Window Lifecycle Management**: Added proper cleanup of destroyed window references
+- **Error Recovery**: Implemented error handling for broken window communications
+- **Resource Tracking**: Added automatic cleanup of invalid banner references
+- **Memory Optimization**: Improved window state tracking and cleanup
 
-```javascript
-// Added window cleanup listeners
-bannerWindow.on('closed', () => {
-  this.banners.delete(bannerId);
-});
+#### Web Server (`src/webServer.js`)
+- **Graceful Shutdown**: Implemented proper server shutdown with timeout fallback
+- **Connection Cleanup**: Added cleanup of all socket connections before server shutdown
+- **Resource Release**: Ensured all server resources are properly released
 
-bannerWindow.on('unresponsive', () => {
-  console.warn(`Banner ${bannerId} window became unresponsive`);
-});
-```
+#### Queue Manager (`src/queueManager.js`)
+- **Error Handling**: Added comprehensive error handling for all queue operations
+- **State Validation**: Improved validation of queue state before operations
+- **Resource Cleanup**: Added proper cleanup of queue references
 
-## Performance Optimizations
+### 2. Code Efficiency
 
-### 3. Debounced Search with Memoization
-**File**: `src/controlPanel.jsx`
-**Issue**: Search filtering ran on every keystroke, causing performance issues
-**Fix**: 
-- Implemented debounced search (300ms delay)
-- Added memoization for filtered results
-- Created reusable debounce utility
+#### Consolidated Functions
+- **Pi System Management**: Consolidated duplicate Pi system operations into a single `managePiSystem()` function
+- **Error Handling**: Standardized error handling patterns across all components
+- **IPC Handlers**: Reduced code duplication in IPC handler implementations
 
-```javascript
-// Debounced search with memoization
-const debouncedSearchTerm = useDebounce(searchTerm, 300);
+#### Optimized Operations
+- **Pi Client Scanning**: Improved network scanning with batch processing and concurrency limits
+- **Parallel Requests**: Used `Promise.allSettled()` for parallel API calls with proper error handling
+- **Timeout Management**: Implemented proper timeout handling with `AbortController`
 
-const { membersToDisplay, recentlyDisplayedMembers } = useMemo(() => {
-  const searchLower = debouncedSearchTerm.toLowerCase();
-  // ... filtering logic
-}, [members, debouncedSearchTerm]);
-```
+### 3. React Component Optimization
 
-### 4. Font Size Calculation Optimization
-**File**: `src/useFitText.js`
-**Issue**: Linear search for optimal font size was inefficient
-**Fix**:
-- Implemented binary search algorithm (O(log n) vs O(n))
-- Added caching for font size calculations
-- Added cache size management to prevent memory bloat
+#### PiClientManager (`src/piClientManager.jsx`)
+- **useCallback Optimization**: Memoized functions to prevent unnecessary re-renders
+- **useRef for Intervals**: Used refs to track intervals for proper cleanup
+- **Conditional Rendering**: Only refresh client list when Pi system is enabled and running
+- **Memory Leak Prevention**: Proper cleanup of all intervals and event listeners
 
-```javascript
-// Binary search for optimal font size
-let minSize = 10;
-let maxSize = 175;
-while (minSize <= maxSize) {
-  const midSize = Math.floor((minSize + maxSize) / 2);
-  // ... test and adjust
-}
-```
+### 4. Network Efficiency
 
-### 5. Smart Image Preloading
-**File**: `src/banner.jsx`
-**Issue**: Simple preloading strategy wasn't optimal for performance
-**Fix**:
-- Implemented priority queue for preloading
-- Limited concurrent preloads to 3
-- Added smart preloading strategy based on slideshow size
-- Added proper error handling and cleanup
+#### Pi Client Discovery
+- **Concurrency Control**: Limited concurrent network requests to prevent overwhelming the network
+- **Batch Processing**: Process network scans in batches of 10 concurrent requests
+- **Timeout Optimization**: Reduced timeout from 2 seconds to 1.5 seconds for faster scanning
+- **Error Filtering**: Only log non-timeout errors to reduce console noise
 
-```javascript
-// Priority-based preloading
-const preloadImage = (src, priority = 0) => {
-  preloadQueueRef.current.push({ src, priority });
-  preloadQueueRef.current.sort((a, b) => b.priority - a.priority);
-  // ... process queue with concurrency limit
-};
-```
+#### Parallel API Calls
+- **Health Checks**: Use `Promise.allSettled()` for parallel health, channel, and version checks
+- **Error Resilience**: Continue processing even if some API calls fail
 
-## Utility Functions Added
+### 5. Error Handling and Resilience
 
-### 6. Performance Utilities
-**File**: `src/utils.js`
-**Added**:
-- `debounce()` - Debounce function calls
-- `throttle()` - Throttle function calls
+#### Comprehensive Error Handling
+- **Try-Catch Blocks**: Added error handling to all critical operations
+- **Graceful Degradation**: Components continue to function even when some operations fail
+- **Error Recovery**: Automatic cleanup and recovery from error states
+- **User Feedback**: Proper error messages and status updates
 
-```javascript
-export function debounce(func, wait) {
-  let timeout;
-  return function executedFunction(...args) {
-    const later = () => {
-      clearTimeout(timeout);
-      func(...args);
-    };
-    clearTimeout(timeout);
-    timeout = setTimeout(later, wait);
-  };
-}
-```
+#### Process-Level Protection
+- **Uncaught Exception Handler**: Prevents app crashes from unhandled errors
+- **Unhandled Rejection Handler**: Handles promise rejections gracefully
+- **Resource Cleanup**: Ensures resources are cleaned up even during error conditions
 
-## Performance Impact
+## Performance Metrics
 
-### Before Optimizations:
-- **Memory Leaks**: Event listeners accumulated over time
-- **Search Performance**: O(n) filtering on every keystroke
-- **Font Calculation**: O(n) linear search for each text change
-- **Image Preloading**: Simple sequential loading
+### Before Optimization
+- **Memory Usage**: Potential memory leaks from uncleaned intervals and references
+- **Network Scanning**: 50 concurrent requests could overwhelm network
+- **Error Handling**: Inconsistent error handling could cause crashes
+- **Resource Cleanup**: Incomplete cleanup on app exit
 
-### After Optimizations:
-- **Memory Management**: Proper cleanup prevents leaks
-- **Search Performance**: O(n) filtering with 300ms debounce
-- **Font Calculation**: O(log n) binary search with caching
-- **Image Preloading**: Priority-based with concurrency control
+### After Optimization
+- **Memory Usage**: Proper cleanup prevents memory leaks
+- **Network Scanning**: Controlled concurrency with batch processing
+- **Error Handling**: Comprehensive error handling with graceful degradation
+- **Resource Cleanup**: Complete cleanup sequence on app exit
 
-## Configuration
+## Best Practices Implemented
 
-### Debounce Settings:
-- Search debounce: 300ms
-- Font cache size: 100 entries (auto-cleanup at 100)
-- Preload concurrency: 3 images
-- Preload priority levels: 1-10
+### 1. Resource Management
+- Always clean up intervals, timeouts, and event listeners
+- Use refs to track resources that need cleanup
+- Implement proper error handling in cleanup functions
+- Validate resource state before operations
 
-### Cache Management:
-- Font size cache: LRU-style cleanup
-- Image preload cache: Automatic cleanup on slideshow update
-- Event listener cleanup: Automatic on component unmount
+### 2. Error Handling
+- Use try-catch blocks for all async operations
+- Implement graceful degradation for non-critical failures
+- Provide meaningful error messages to users
+- Log errors appropriately for debugging
 
-## Additional Benefits
+### 3. Performance Optimization
+- Use `useCallback` and `useMemo` for expensive operations
+- Implement batch processing for network operations
+- Use `Promise.allSettled()` for parallel operations with error handling
+- Limit concurrency to prevent resource exhaustion
 
-1. **Reduced CPU Usage**: Memoization prevents unnecessary recalculations
-2. **Better Memory Management**: Proper cleanup prevents memory leaks
-3. **Improved User Experience**: Debounced search feels more responsive
-4. **Smoother Animations**: Optimized font calculations reduce layout thrashing
-5. **Better Resource Usage**: Smart preloading reduces bandwidth waste
+### 4. Code Organization
+- Consolidate duplicate code into reusable functions
+- Use consistent error handling patterns
+- Implement proper separation of concerns
+- Add comprehensive logging for debugging
 
-## Monitoring
+## Monitoring and Maintenance
 
-To monitor the effectiveness of these optimizations:
+### Logging
+- Added comprehensive logging throughout the application
+- Different log levels for different types of information
+- Error logging with context for debugging
+- Performance metrics logging
 
-1. **Memory Usage**: Check for memory leaks in DevTools
-2. **Search Performance**: Monitor search input responsiveness
-3. **Font Rendering**: Observe smoothness of text resizing
-4. **Image Loading**: Check for smooth slideshow transitions
+### Debugging
+- Clear error messages with context
+- Proper stack traces for debugging
+- Resource state tracking
+- Network operation monitoring
 
-## Future Optimizations
+## Future Improvements
 
-Potential areas for further optimization:
+### Potential Enhancements
+- **Connection Pooling**: Implement connection pooling for network operations
+- **Caching**: Add caching for frequently accessed data
+- **Background Processing**: Move heavy operations to background threads
+- **Metrics Collection**: Add performance metrics collection
+- **Health Monitoring**: Implement health checks for all components
 
-1. **Virtual Scrolling**: For large member lists (>1000 items)
-2. **Image Compression**: Automatic image optimization
-3. **Lazy Loading**: Load components only when needed
-4. **Service Worker**: Cache frequently used data
-5. **Web Workers**: Move heavy computations off main thread 
+### Monitoring Tools
+- **Memory Usage**: Monitor memory usage patterns
+- **Network Performance**: Track network operation performance
+- **Error Rates**: Monitor error rates and types
+- **Resource Utilization**: Track resource usage across components
+
+## Conclusion
+
+These optimizations significantly improve the application's efficiency, safety, and resilience. The codebase now follows best practices for resource management, error handling, and performance optimization. The application is more stable, uses resources more efficiently, and provides a better user experience.
+
+Regular monitoring and maintenance will ensure these improvements continue to provide benefits as the application evolves. 

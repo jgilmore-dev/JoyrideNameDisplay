@@ -755,6 +755,14 @@
                     this.lastUpdate.textContent = new Date().toLocaleTimeString();
                 });
 
+                this.socket.on('slideshow-clear', () => {
+                    console.log('[PiClient] Received slideshow clear');
+                    this.clearSlideshow();
+                    this.messageCount++;
+                    this.messageCountElement.textContent = this.messageCount;
+                    this.lastUpdate.textContent = new Date().toLocaleTimeString();
+                });
+
                 this.socket.on('font-color-update', (data) => {
                     console.log('[PiClient] Received font color update:', data);
                     this.updateFontColor(data.color);
@@ -825,6 +833,17 @@
                 this.nameDisplay.classList.add('hidden');
                 this.slideshowDisplay.classList.remove('hidden');
                 this.slideshowDisplay.classList.add('fade-in');
+            }
+
+            clearSlideshow() {
+                this.currentSlide = null;
+                this.slideshowDisplay.classList.add('hidden');
+                this.nameDisplay.classList.remove('hidden');
+                this.nameDisplay.classList.add('fade-out');
+                setTimeout(() => {
+                    this.nameDisplay.classList.add('hidden');
+                    this.nameDisplay.classList.remove('fade-out');
+                }, 500);
             }
 
             updateFontColor(color) {

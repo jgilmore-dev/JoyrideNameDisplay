@@ -5,6 +5,9 @@ import AddMemberForm from './addMemberForm.jsx';
 import EditMemberForm from './editMemberForm.jsx';
 import UpdateManager from './updateManager.jsx';
 import PiClientManager from './piClientManager.jsx';
+import QueueManager from './queueManager.jsx';
+import MemberMergeManager from './memberMergeManager.jsx';
+import Fuse from 'fuse.js';
 
 // Debounce hook for search optimization
 const useDebounce = (value, delay) => {
@@ -47,6 +50,16 @@ const ControlPanel = () => {
   const [memberCollapsed, setMemberCollapsed] = useState(false);
   const [updateCollapsed, setUpdateCollapsed] = useState(false);
   const [piCollapsed, setPiCollapsed] = useState(false);
+  const [queueCollapsed, setQueueCollapsed] = useState(false);
+  const [slideshowCollapsed, setSlideshowCollapsed] = useState(false);
+  const [slideshowStatus, setSlideshowStatus] = useState({
+    enabled: true,
+    interval: 20000,
+    imageCount: 0,
+    isRunning: false,
+    currentSlideIndex: 0
+  });
+  const [mergeMode, setMergeMode] = useState(false);
 
   // Debounce search term to improve performance
   const debouncedSearchTerm = useDebounce(searchTerm, 300);
@@ -60,19 +73,34 @@ const ControlPanel = () => {
   const { membersToDisplay, recentlyDisplayedMembers } = useMemo(() => {
     const searchLower = debouncedSearchTerm.toLowerCase();
     
-    const membersToDisplay = members.filter(member => {
-      const isNotDisplayed = !member.displayed;
-      const searchString = `${member.Member1 || ''} ${member.Member2 || ''} ${member.Member3 || ''} ${member.Member4 || ''} ${member.LastName}`.toLowerCase();
-      const matchesSearch = searchString.includes(searchLower);
-      return isNotDisplayed && matchesSearch;
-    });
+    // Configure Fuse.js for fuzzy search
+    const fuseOptions = {
+      keys: ['Member1', 'Member2', 'Member3', 'Member4', 'LastName'],
+      threshold: 0.3, // Lower threshold = more strict matching
+      includeScore: true,
+      minMatchCharLength: 2,
+      shouldSort: true,
+      findAllMatches: true
+    };
 
-    const recentlyDisplayedMembers = members.filter(member => {
-      const isDisplayed = member.displayed;
-      const searchString = `${member.Member1 || ''} ${member.Member2 || ''} ${member.Member3 || ''} ${member.Member4 || ''} ${member.LastName}`.toLowerCase();
-      const matchesSearch = searchString.includes(searchLower);
-      return isDisplayed && matchesSearch;
-    });
+    // Create search function
+    const searchMembers = (memberList, searchTerm) => {
+      if (!searchTerm.trim()) {
+        return memberList;
+      }
+      
+      const fuse = new Fuse(memberList, fuseOptions);
+      const results = fuse.search(searchTerm);
+      return results.map(result => result.item);
+    };
+
+    // Filter and search members
+    const notDisplayedMembers = members.filter(member => !member.displayed);
+    const displayedMembers = members.filter(member => member.displayed);
+
+    const membersToDisplay = searchMembers(notDisplayedMembers, debouncedSearchTerm);
+    const recentlyDisplayedMembers = searchMembers(displayedMembers, debouncedSearchTerm)
+      .sort((a, b) => (b.displayedAt || 0) - (a.displayedAt || 0));
 
     return { membersToDisplay, recentlyDisplayedMembers };
   }, [members, debouncedSearchTerm]);
@@ -110,11 +138,26 @@ const ControlPanel = () => {
     }
   };
 
+  const fetchSlideshowStatus = async () => {
+    try {
+      const status = await window.electronAPI.invoke('get-slideshow-status');
+      setSlideshowStatus(status);
+    } catch (error) {
+      console.error('Failed to load slideshow status:', error);
+    }
+  };
+
   // Fetch initial data on component mount
   useEffect(() => {
     fetchMembers();
     fetchSettings();
     fetchAvailableDisplays();
+    fetchSlideshowStatus();
+    
+    // Refresh slideshow status every 5 seconds
+    const interval = setInterval(fetchSlideshowStatus, 5000);
+    
+    return () => clearInterval(interval);
   }, []);
 
   const handleLoadCsv = async () => {
@@ -141,15 +184,38 @@ const ControlPanel = () => {
     fetchMembers(); // Refresh list
   };
 
-  const handleSelectMember = async (member, banner) => {
-    const firstNames = formatFirstNames(member);
-    const nameData = {
-      firstLine: firstNames,
-      secondLine: member.LastName,
-    };
+  const handleSelectMember = async (member, banner, action = 'display') => {
+    if (action === 'queue') {
+      // Add to queue
+      try {
+        const result = await window.electronAPI.invoke('add-to-queue', { bannerId: banner, member });
+        if (result.success) {
+          alert(result.message);
+        } else {
+          alert(result.message);
+        }
+      } catch (error) {
+        console.error('Failed to add to queue:', error);
+        alert('Failed to add member to queue');
+      }
+    } else {
+      // Direct display (existing functionality)
+      const firstNames = formatFirstNames(member);
+      const nameData = {
+        firstLine: firstNames,
+        secondLine: member.LastName,
+      };
+      await window.electronAPI.invoke('banner-display', { banner, nameData });
+      await window.electronAPI.invoke('mark-as-displayed', member.id);
+      fetchMembers(); // Refresh list
+      setSearchTerm(''); // Clear the search bar after displaying a name
+    }
+  };
+
+  const handleDisplayMerged = async (nameData, banner) => {
     await window.electronAPI.invoke('banner-display', { banner, nameData });
-    await window.electronAPI.invoke('mark-as-displayed', member.id);
     fetchMembers(); // Refresh list
+    setSearchTerm(''); // Clear the search bar after displaying merged names
   };
 
   const handleImportImages = async () => {
@@ -219,6 +285,42 @@ const ControlPanel = () => {
   // Helper function to check if banner is enabled
   const isBannerEnabled = (bannerId) => {
     return getBannerSetting(bannerId, 'enabled') || false;
+  };
+
+  const handleSlideshowToggle = async () => {
+    try {
+      const action = slideshowStatus.enabled ? 'disable-slideshow' : 'enable-slideshow';
+      const result = await window.electronAPI.invoke(action);
+      if (result.success) {
+        setError('');
+        fetchSlideshowStatus();
+      } else {
+        setError(result.message);
+      }
+    } catch (error) {
+      console.error('Failed to toggle slideshow:', error);
+      setError('Failed to toggle slideshow');
+    }
+  };
+
+  const handleIntervalChange = async (newInterval) => {
+    try {
+      const result = await window.electronAPI.invoke('set-slideshow-interval', newInterval);
+      if (result.success) {
+        setError('');
+        fetchSlideshowStatus();
+      } else {
+        setError(result.message);
+      }
+    } catch (error) {
+      console.error('Failed to set slideshow interval:', error);
+      setError('Failed to set slideshow interval');
+    }
+  };
+
+  const formatInterval = (ms) => {
+    const seconds = Math.round(ms / 1000);
+    return `${seconds} second${seconds !== 1 ? 's' : ''}`;
   };
 
   return (
@@ -439,6 +541,14 @@ const ControlPanel = () => {
                     Show Recently Displayed
                   </label>
                 </div>
+                
+                {/* Member Merge Manager */}
+                <MemberMergeManager 
+                  members={showDisplayed ? recentlyDisplayedMembers : membersToDisplay}
+                  onDisplayMerged={handleDisplayMerged}
+                  enabledBanners={settings.banners.filter(b => b.enabled).map(b => b.id)}
+                />
+                
                 <MemberList 
                   members={showDisplayed ? recentlyDisplayedMembers : membersToDisplay} 
                   onSelectMember={handleSelectMember} 
@@ -461,17 +571,93 @@ const ControlPanel = () => {
 
       <div className="media-section">
         <div className="section-header" onClick={() => setMediaCollapsed(!mediaCollapsed)}>
-          <span>{mediaCollapsed ? '►' : '▼'}</span> <h3>Slideshow Setup</h3>
+          <span>{mediaCollapsed ? '►' : '▼'}</span> <h3>Slideshow Management</h3>
         </div>
         {!mediaCollapsed && (
           <div>
-            <div className="button-group">
-              <button onClick={handleImportImages} className="secondary-button">
-                🖼️ Import Slideshow Images
-              </button>
-              <button onClick={handleClearCache} className="danger-button">
-                🗑️ Clear Slideshow Images
-              </button>
+            {/* Slideshow Status */}
+            <div className="slideshow-status">
+              <div className="status-grid">
+                <div className="status-item">
+                  <span className="label">Status:</span>
+                  <span className={`value ${slideshowStatus.enabled ? 'enabled' : 'disabled'}`}>
+                    {slideshowStatus.enabled ? 'Enabled' : 'Disabled'}
+                  </span>
+                </div>
+                <div className="status-item">
+                  <span className="label">Images:</span>
+                  <span className="value">{slideshowStatus.imageCount}</span>
+                </div>
+                <div className="status-item">
+                  <span className="label">Interval:</span>
+                  <span className="value">{formatInterval(slideshowStatus.interval)}</span>
+                </div>
+                <div className="status-item">
+                  <span className="label">Running:</span>
+                  <span className={`value ${slideshowStatus.isRunning ? 'running' : 'stopped'}`}>
+                    {slideshowStatus.isRunning ? 'Yes' : 'No'}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* Slideshow Controls */}
+            <div className="slideshow-controls">
+              <div className="button-group">
+                <button 
+                  onClick={handleSlideshowToggle} 
+                  className={`toggle-button ${slideshowStatus.enabled ? 'disable' : 'enable'}`}
+                >
+                  {slideshowStatus.enabled ? '🖼️ Disable Slideshow' : '🖼️ Enable Slideshow'}
+                </button>
+                
+                {slideshowStatus.enabled && (
+                  <div className="interval-control">
+                    <label>Interval:</label>
+                    <select
+                      value={Math.round(slideshowStatus.interval / 1000)}
+                      onChange={(e) => handleIntervalChange(parseInt(e.target.value) * 1000)}
+                    >
+                      <option value={5}>5 seconds</option>
+                      <option value={10}>10 seconds</option>
+                      <option value={15}>15 seconds</option>
+                      <option value={20}>20 seconds</option>
+                      <option value={30}>30 seconds</option>
+                      <option value={60}>60 seconds</option>
+                    </select>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Image Management */}
+            <div className="image-management">
+              <h4>Image Management</h4>
+              <div className="button-group">
+                <button onClick={handleImportImages} className="secondary-button">
+                  🖼️ Import Slideshow Images
+                </button>
+                <button onClick={handleClearCache} className="danger-button">
+                  🗑️ Clear Slideshow Images
+                </button>
+              </div>
+            </div>
+
+            {/* Slideshow Information */}
+            <div className="slideshow-info">
+              <h4>About Slideshow</h4>
+              <div className="info-content">
+                <p>
+                  The slideshow displays background images on banners when no names are being shown.
+                  When disabled, banners will show a blank screen instead of rotating images.
+                </p>
+                <ul>
+                  <li><strong>Enabled:</strong> Background images rotate automatically</li>
+                  <li><strong>Disabled:</strong> Clean blank screen when no names are displayed</li>
+                  <li><strong>Interval:</strong> Time between image changes (5-60 seconds)</li>
+                  <li><strong>Efficiency:</strong> Disabling reduces resource usage</li>
+                </ul>
+              </div>
             </div>
           </div>
         )}
@@ -498,6 +684,18 @@ const ControlPanel = () => {
           </div>
         )}
       </div>
+
+      {/* Queue Management Section */}
+      <div className="queue-section">
+        <div className="section-header" onClick={() => setQueueCollapsed(!queueCollapsed)}>
+          <span>{queueCollapsed ? '►' : '▼'}</span> <h3>Queue Management</h3>
+        </div>
+        {!queueCollapsed && (
+          <QueueManager enabledBanners={settings.banners.filter(b => b.enabled).map(b => b.id)} />
+        )}
+      </div>
+
+      {/* Display Management Section */}
 
       {error && <p className="error-text">{error}</p>}
     </div>

@@ -6,9 +6,14 @@
 module.exports = {
   // Slideshow Configuration
   slideshow: {
+    enabled: true, // Default to enabled
     interval: 20000, // 20 seconds between slides
     supportedFormats: ['jpg', 'jpeg', 'png', 'gif'],
     maxFileSize: 10 * 1024 * 1024, // 10MB
+    defaultSettings: {
+      enabled: true,
+      interval: 20000
+    }
   },
 
   // Banner Configuration
@@ -101,7 +106,14 @@ module.exports = {
       getSettings: 'get-settings',
       saveSettings: 'save-settings',
       applyDisplaySettings: 'apply-display-settings',
-      getAvailableDisplays: 'get-available-displays'
+      getAvailableDisplays: 'get-available-displays',
+      
+      // Slideshow management
+      getSlideshowStatus: 'get-slideshow-status',
+      enableSlideshow: 'enable-slideshow',
+      disableSlideshow: 'disable-slideshow',
+      setSlideshowInterval: 'set-slideshow-interval',
+      clearSlideshow: 'clear-slideshow'
     }
   },
 
@@ -126,5 +138,22 @@ module.exports = {
     settingsSaved: 'Settings saved successfully.',
     memberAdded: 'Member added successfully.',
     memberUpdated: 'Member updated successfully.'
+  },
+
+  // Pi System Configuration
+  piSystem: {
+    enabled: false, // Default to disabled for efficiency
+    port: 3000,
+    updatePort: 3001,
+    autoDiscovery: true,
+    networkScanInterval: 5000, // 5 seconds
+    connectionTimeout: 10000, // 10 seconds
+    maxRetries: 3,
+    defaultSettings: {
+      enabled: false,
+      port: 3000,
+      updatePort: 3001,
+      autoDiscovery: true
+    }
   }
 }; 

@@ -18,6 +18,7 @@ const Banner = () => {
   const imagesRef = useRef([]); // Create a ref to hold the current images
   const preloadedImagesRef = useRef(new Set()); // Track preloaded images
   const preloadQueueRef = useRef([]); // Priority queue for preloading
+  const pendingImageLoadsRef = useRef(new Set()); // Track pending image loads for cleanup
 
   const bannerNumber = getBannerNumber();
   const { fontSize, ref } = useFitText(displayName?.firstLine);
@@ -40,12 +41,17 @@ const Banner = () => {
         item.processing = true;
         
         const img = new Image();
+        // Track this image load for cleanup
+        pendingImageLoadsRef.current.add(img);
+        
         img.onload = () => {
           preloadedImagesRef.current.add(item.src);
+          pendingImageLoadsRef.current.delete(img);
           // Remove from queue
           preloadQueueRef.current = preloadQueueRef.current.filter(q => q.src !== item.src);
         };
         img.onerror = () => {
+          pendingImageLoadsRef.current.delete(img);
           // Remove from queue on error
           preloadQueueRef.current = preloadQueueRef.current.filter(q => q.src !== item.src);
         };
@@ -64,9 +70,17 @@ const Banner = () => {
     }
     
     const img = new Image();
+    // Track this image load for cleanup
+    pendingImageLoadsRef.current.add(img);
+    
     img.onload = () => {
       setNextSlideSrc(src);
       setIsNextImageReady(true);
+      pendingImageLoadsRef.current.delete(img);
+    };
+    img.onerror = () => {
+      setIsNextImageReady(false);
+      pendingImageLoadsRef.current.delete(img);
     };
     img.src = src;
   };
@@ -159,6 +173,27 @@ const Banner = () => {
       }
     };
     const setFontColorHandler = (color) => setFontColor(color);
+    const clearSlideshowHandler = () => {
+      setCurrentSlideSrc('');
+      setNextSlideSrc('');
+      setIsNextImageReady(false);
+      
+      // Cancel all pending image loads
+      pendingImageLoadsRef.current.forEach(img => {
+        img.src = ''; // Cancel the load
+      });
+      pendingImageLoadsRef.current.clear();
+      
+      // Clear preloaded images and queue
+      preloadedImagesRef.current.clear();
+      preloadQueueRef.current = [];
+      
+      // Clear any pending image loads
+      if (imagesRef.current) {
+        imagesRef.current = [];
+      }
+      console.log('[Banner] Slideshow cleared and all resources cleaned up');
+    };
 
     // Register listeners
     window.electronAPI.on('display-name', displayNameHandler);
@@ -167,6 +202,7 @@ const Banner = () => {
     window.electronAPI.on('slideshow-updated', slideshowUpdatedHandler);
     window.electronAPI.on('set-slide', setSlideHandler);
     window.electronAPI.on('set-font-color', setFontColorHandler);
+    window.electronAPI.on('clear-slideshow', clearSlideshowHandler);
 
     // Return cleanup function
     return () => {
@@ -177,6 +213,13 @@ const Banner = () => {
       window.electronAPI.removeAllListeners('slideshow-updated');
       window.electronAPI.removeAllListeners('set-slide');
       window.electronAPI.removeAllListeners('set-font-color');
+      window.electronAPI.removeAllListeners('clear-slideshow');
+      
+      // Cancel all pending image loads
+      pendingImageLoadsRef.current.forEach(img => {
+        img.src = ''; // Cancel the load
+      });
+      pendingImageLoadsRef.current.clear();
       
       // Clear preload cache and queue
       preloadedImagesRef.current.clear();

@@ -35,7 +35,8 @@ async function loadDataFromCsv() {
         members = results.data.map((m, index) => ({ 
           ...m, 
           id: `${idPrefix}-${index}-${Date.now()}`, 
-          displayed: false 
+          displayed: false,
+          displayedAt: null
         }));
         resolve({ data: members });
       },
@@ -61,7 +62,7 @@ function getMembers() {
  */
 function addMember(newMember) {
   const idPrefix = configManager.getDataConfig().idPrefixes.manual;
-  const memberWithState = { ...newMember, id: `${idPrefix}-${Date.now()}`, displayed: false };
+  const memberWithState = { ...newMember, id: `${idPrefix}-${Date.now()}`, displayed: false, displayedAt: null };
   members = [memberWithState, ...members];
   return members;
 }
@@ -92,7 +93,7 @@ function markAsDisplayed(memberId) {
     throw new Error(configManager.getErrors().memberNotFound);
   }
   
-  members = members.map(m => (m.id === memberId ? { ...m, displayed: true } : m));
+  members = members.map(m => (m.id === memberId ? { ...m, displayed: true, displayedAt: Date.now() } : m));
   return members;
 }
 

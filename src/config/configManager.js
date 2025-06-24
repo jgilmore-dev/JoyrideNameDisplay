@@ -300,6 +300,69 @@ class ConfigManager {
     const supportedFormats = this.getDataConfig().supportedCsvFormats;
     return supportedFormats.includes(format.toLowerCase());
   }
+
+  /**
+   * Gets Pi system configuration
+   */
+  getPiSystemConfig() {
+    return this.getSection('piSystem');
+  }
+
+  /**
+   * Gets default Pi system settings
+   */
+  getDefaultPiSystemSettings() {
+    return this.getPiSystemConfig().defaultSettings;
+  }
+
+  /**
+   * Validates Pi system settings
+   */
+  validatePiSystemSettings(settings) {
+    if (typeof settings.enabled !== 'boolean') {
+      throw new Error('Pi system enabled must be a boolean');
+    }
+
+    if (settings.enabled) {
+      if (typeof settings.port !== 'number' || settings.port < 1 || settings.port > 65535) {
+        throw new Error('Pi system port must be a valid port number (1-65535)');
+      }
+
+      if (typeof settings.updatePort !== 'number' || settings.updatePort < 1 || settings.updatePort > 65535) {
+        throw new Error('Pi system update port must be a valid port number (1-65535)');
+      }
+
+      if (typeof settings.autoDiscovery !== 'boolean') {
+        throw new Error('Pi system autoDiscovery must be a boolean');
+      }
+    }
+
+    return true;
+  }
+
+  /**
+   * Validates slideshow settings
+   */
+  validateSlideshowSettings(settings) {
+    if (typeof settings.enabled !== 'boolean') {
+      throw new Error('Slideshow enabled must be a boolean');
+    }
+
+    if (settings.enabled) {
+      if (typeof settings.interval !== 'number' || settings.interval < 1000) {
+        throw new Error('Slideshow interval must be at least 1000ms');
+      }
+    }
+
+    return true;
+  }
+
+  /**
+   * Gets default slideshow settings
+   */
+  getDefaultSlideshowSettings() {
+    return this.getSlideshowConfig().defaultSettings;
+  }
 }
 
 // Create and export a singleton instance

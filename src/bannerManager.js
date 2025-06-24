@@ -24,26 +24,49 @@ class BannerManager {
         if (loadedSettings.banner1Enabled !== undefined) {
           this.settings = {
             banners: [
-              { id: 1, enabled: loadedSettings.banner1Enabled || false, display: loadedSettings.banner1Display || 0 },
-              { id: 2, enabled: loadedSettings.banner2Enabled || false, display: loadedSettings.banner2Display || 1 }
+              { id: 1, enabled: loadedSettings.banner1Enabled || false, targetType: 'local', targetId: 0, display: loadedSettings.banner1Display || 0 },
+              { id: 2, enabled: loadedSettings.banner2Enabled || false, targetType: 'local', targetId: 1, display: loadedSettings.banner2Display || 1 }
             ],
-            fontColor: loadedSettings.fontColor || configManager.getBannerConfig().defaultFontColor
+            fontColor: loadedSettings.fontColor || configManager.getBannerConfig().defaultFontColor,
+            piSystem: configManager.getDefaultPiSystemSettings(),
+            slideshow: configManager.getDefaultSlideshowSettings()
           };
         } else {
-          this.settings = { ...this.settings, ...loadedSettings };
+          // Merge with default settings
+          const defaultPiSettings = configManager.getDefaultPiSystemSettings();
+          const defaultSlideshowSettings = configManager.getDefaultSlideshowSettings();
+          this.settings = { 
+            ...this.settings, 
+            ...loadedSettings,
+            piSystem: { ...defaultPiSettings, ...loadedSettings.piSystem },
+            slideshow: { ...defaultSlideshowSettings, ...loadedSettings.slideshow }
+          };
         }
         
         // Validate settings against configuration
         configManager.validateBannerSettings(this.settings);
+        if (this.settings.piSystem) {
+          configManager.validatePiSystemSettings(this.settings.piSystem);
+        }
+        if (this.settings.slideshow) {
+          configManager.validateSlideshowSettings(this.settings.slideshow);
+        }
         
         console.log('Loaded settings:', this.settings);
       } else {
         console.log('No settings file found, using defaults:', this.settings);
+        // Add default settings
+        this.settings.piSystem = configManager.getDefaultPiSystemSettings();
+        this.settings.slideshow = configManager.getDefaultSlideshowSettings();
       }
     } catch (error) {
       console.error(configManager.getErrors().settingsLoadError, error);
       // Fall back to default settings
-      this.settings = configManager.getDefaultBannerSettings();
+      this.settings = {
+        ...configManager.getDefaultBannerSettings(),
+        piSystem: configManager.getDefaultPiSystemSettings(),
+        slideshow: configManager.getDefaultSlideshowSettings()
+      };
     }
   }
 
@@ -199,34 +222,66 @@ class BannerManager {
 
   // Close all banner windows
   closeAllBanners() {
+    console.log(`[BannerManager] Closing ${this.banners.size} banner windows...`);
     this.banners.forEach((window, id) => {
       if (window && !window.isDestroyed()) {
-        console.log(`Closing Banner ${id} window`);
-        window.close();
+        try {
+          console.log(`[BannerManager] Closing Banner ${id} window`);
+          window.close();
+        } catch (error) {
+          console.error(`[BannerManager] Error closing Banner ${id}:`, error);
+        }
       }
     });
     this.banners.clear();
+    this.readyWindows = 0;
+    this.expectedWindows = 0;
   }
 
   // Get a specific banner window
   getBanner(bannerId) {
-    return this.banners.get(bannerId);
+    const banner = this.banners.get(bannerId);
+    if (banner && banner.isDestroyed()) {
+      // Clean up destroyed window reference
+      this.banners.delete(bannerId);
+      return null;
+    }
+    return banner;
   }
 
-  // Send message to a specific banner
+  // Send message to a specific banner with error handling
   sendToBanner(bannerId, event, data) {
     const banner = this.getBanner(bannerId);
     if (banner && !banner.isDestroyed()) {
-      banner.webContents.send(event, data);
+      try {
+        banner.webContents.send(event, data);
+      } catch (error) {
+        console.error(`[BannerManager] Error sending to Banner ${bannerId}:`, error);
+        // Remove broken window reference
+        this.banners.delete(bannerId);
+      }
     }
   }
 
-  // Broadcast message to all banners
+  // Broadcast message to all banners with error handling
   broadcastToBanners(event, data) {
+    const brokenBanners = [];
     this.banners.forEach((banner, id) => {
       if (banner && !banner.isDestroyed()) {
-        banner.webContents.send(event, data);
+        try {
+          banner.webContents.send(event, data);
+        } catch (error) {
+          console.error(`[BannerManager] Error broadcasting to Banner ${id}:`, error);
+          brokenBanners.push(id);
+        }
+      } else {
+        brokenBanners.push(id);
       }
+    });
+    
+    // Clean up broken banner references
+    brokenBanners.forEach(id => {
+      this.banners.delete(id);
     });
   }
 

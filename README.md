@@ -24,6 +24,15 @@ This application ensures every participant gets the recognition they deserve, wi
 * **Family Support**: Handle siblings and multi-member families with ease
 * **Font Customization**: Customize colors to match your event branding
 * **Independent Banner Control**: Enable banners as needed for your setup
+* **Local Display Support**: Display names on multiple local monitors
+* **Raspberry Pi Network Support**: Opt-in system for remote Pi displays (disabled by default for efficiency)
+* **Dual-Channel Updates**: Stable and testing update channels for both control panel and Pi clients
+* **Queue Management**: Stage multiple members per banner with move functionality
+* **Fuzzy Search**: Intelligent name matching with typo tolerance
+* **Slideshow Support**: Background image rotation during events
+* **Real-time Updates**: Instant name display across all connected devices
+* **Automatic Updates**: Self-updating system for both control panel and Pi clients
+* **Network Discovery**: Automatic Pi client detection and management
 
 ## Perfect For
 
